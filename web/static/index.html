@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Điều khiển robot omni</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header class="bar">
+    <h1>Robot omni 4 bánh</h1>
+    <ul class="chips" aria-label="Trạng thái kết nối">
+      <li id="chip-link" data-ok="false">Máy chủ: đang nối</li>
+      <li id="chip-camera" data-ok="false">Camera: chưa mở được</li>
+      <li id="chip-robot" data-ok="false">Robot: chưa kết nối</li>
+      <li id="chip-fps" data-ok="false">0 khung/giây</li>
+    </ul>
+    <div class="seg" role="group" aria-label="Chế độ điều khiển">
+      <button id="mode-manual" aria-pressed="true">Thủ công</button>
+      <button id="mode-gesture" aria-pressed="false">Cử chỉ tay</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="view">
+      <canvas id="view" width="640" height="480" aria-label="Hình từ camera laptop"></canvas>
+      <p id="hint" class="hint"></p>
+    </section>
+
+    <aside class="controls">
+      <div id="pad" class="pad" aria-label="Cần điều khiển: kéo lên để tiến, sang ngang để đi ngang">
+        <div id="knob" class="knob"></div>
+      </div>
+
+      <div class="rot">
+        <button id="rot-l">Xoay trái</button>
+        <button id="rot-r">Xoay phải</button>
+      </div>
+
+      <label class="speed">
+        <span>Tốc độ tối đa <output id="speed-out">50%</output></span>
+        <input id="speed" type="range" min="10" max="100" value="50">
+      </label>
+
+      <dl class="readout" aria-label="Lệnh hiện tại">
+        <div><dt>vx (tiến)</dt><dd id="r-vx">0.00</dd></div>
+        <div><dt>vy (ngang)</dt><dd id="r-vy">0.00</dd></div>
+        <div><dt>w (xoay)</dt><dd id="r-w">0.00</dd></div>
+      </dl>
+
+      <button id="estop" class="estop" aria-pressed="false">Dừng khẩn cấp</button>
+      <p class="keys">Phím: W/S tiến lùi, A/D đi ngang, Q/E xoay, Space dừng khẩn cấp.</p>
+    </aside>
+  </main>
+
+  <script src="/static/dashboard.js"></script>
+</body>
+</html>

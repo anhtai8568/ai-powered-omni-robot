@@ -15,8 +15,12 @@ ament-pep257==0.17.5
 ament-uncrustify==0.17.5
 ament-xmllint==0.17.5
 angles==1.16.1
+annotated-doc==0.0.5
+annotated-types==0.8.0
+anyio==4.15.1
 bond==4.2.0
 builtin-interfaces==2.0.4
+click==8.5.0
 composition-interfaces==2.0.4
 cv-bridge==4.1.0
 demo-nodes-py==0.33.11
@@ -31,8 +35,11 @@ examples-rclpy-minimal-client==0.19.7
 examples-rclpy-minimal-publisher==0.19.7
 examples-rclpy-minimal-service==0.19.7
 examples-rclpy-minimal-subscriber==0.19.7
+fastapi==0.162.0
 geographic-msgs==1.0.6
 geometry-msgs==5.3.8
+h11==0.16.0
+idna==3.20
 image-geometry==4.1.0
 interactive-markers==2.5.5
 laser-geometry==2.7.2
@@ -51,9 +58,12 @@ nav2-common==1.3.13
 nav2-msgs==1.3.13
 numpy==2.5.4
 opencv-python==5.0.0.93
+opentelemetry-api==1.45.1
 osrf-pycommon==2.1.7
 pcl-msgs==1.0.0
 pendulum-msgs==0.33.11
+pydantic==2.14.1
+pydantic_core==2.50.1
 python-qt-binding==2.2.2
 qt-dotgraph==2.7.6
 qt-gui==2.7.6
@@ -130,6 +140,7 @@ shape-msgs==5.3.8
 simulation-interfaces==1.5.1
 smclib==4.2.0
 sros2==0.13.6
+starlette==1.10.0
 statistics-msgs==2.0.4
 std-msgs==5.3.8
 std-srvs==5.3.8
@@ -146,5 +157,8 @@ topic-monitor==0.33.11
 trajectory-msgs==5.3.8
 turtlesim==1.8.4
 type-description-interfaces==2.0.4
+typing-inspection==0.4.4
+typing_extensions==4.16.0
 unique-identifier-msgs==2.5.1
+uvicorn==0.54.0
 visualization-msgs==5.3.8

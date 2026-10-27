@@ -1,0 +1,3 @@
+//dùng để note những việc cần làm
+
+Ngày 28/10: hàn thêm 1 chân GND từ esp32 vào bo mạch để kết nối với encoder của từng motor

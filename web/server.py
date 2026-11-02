@@ -30,6 +30,8 @@ from fastapi.staticfiles import StaticFiles
 BASE = Path(__file__).parent
 sys.path.insert(0, str(BASE.parent))  # để import được ai/camera.py
 from ai.camera import Camera  # noqa: E402
+from ai.gesture_recognition import HandTracker, classify, draw  # noqa: E402
+from ai.gesture_to_command import GestureFilter, to_command  # noqa: E402
 
 STATIC = BASE / "static"
 
@@ -40,6 +42,7 @@ CAMERA_INDEX = int(os.environ.get("CAMERA_INDEX", "0"))
 CONTROL_HZ = 20       # tần số vòng điều khiển gửi lệnh ra robot
 CMD_TIMEOUT = 0.4     # giây; quá thời gian này không có lệnh mới -> dừng robot
 JPEG_QUALITY = 70
+GESTURE_SPEED = 0.5   # tốc độ khi điều khiển bằng cử chỉ (0..1)
 
 
 def clamp(v, lo=-1.0, hi=1.0) -> float:
@@ -59,7 +62,8 @@ class State:
         self.estop = False
         self.manual_cmd = (0.0, 0.0, 0.0)
         self.manual_ts = 0.0
-        self.gesture_cmd = (0.0, 0.0, 0.0)   # AI sẽ ghi vào đây
+        self.gesture = None                  # tên cử chỉ đã lọc nhiễu
+        self.gesture_cmd = (0.0, 0.0, 0.0)
         self.gesture_ts = 0.0
         self.frame_count = 0
         self.fps = 0.0
@@ -68,6 +72,8 @@ class State:
 
 state = State()
 cam = Camera(index=CAMERA_INDEX, width=640, height=480, fps=30, mirror=True)
+tracker = HandTracker()
+gesture_filter = GestureFilter(hold=4)
 
 
 class RobotLink:
@@ -94,15 +100,17 @@ robot = RobotLink()
 
 
 def process_frame(frame):
-    """Chỗ cắm AI (chạy trong thread riêng, không chặn vòng điều khiển).
+    """AI nhận diện cử chỉ (chạy trong thread riêng, không chặn vòng điều khiển).
 
-    `frame` là ảnh BGR (numpy). Sau này:
-      - gọi gesture_recognition rồi gesture_to_command
-      - ghi kết quả:  state.gesture_cmd = (vx, vy, w);  state.gesture_ts = time.time()
-      - muốn vẽ khung xương bàn tay lên hình dashboard thì vẽ lên `frame`
-        rồi return nó; return None nếu không vẽ gì.
+    Luôn chạy, kể cả ở chế độ thủ công, để người dùng thấy AI nhận ra cử chỉ gì
+    trước khi chuyển sang chế độ cử chỉ. Nếu AI bị treo, gesture_ts không được
+    cập nhật và control_loop tự dừng robot sau CMD_TIMEOUT.
     """
-    return None
+    pts = tracker.detect(frame)
+    state.gesture = gesture_filter.update(classify(pts))
+    state.gesture_cmd = to_command(state.gesture, GESTURE_SPEED)
+    state.gesture_ts = time.time()
+    return draw(frame, pts, state.gesture)
 
 
 def encode_frame(frame, want_jpeg: bool):
@@ -122,6 +130,7 @@ def status_msg() -> dict:
         "robot": robot.connected,
         "mode": state.mode,
         "estop": state.estop,
+        "gesture": state.gesture,
         "fps": round(state.fps, 1),
         "out": state.out,
     }
@@ -197,6 +206,7 @@ async def lifespan(app: FastAPI):
     for t in tasks:
         t.cancel()
     cam.stop()
+    tracker.close()
 
 
 app = FastAPI(lifespan=lifespan)

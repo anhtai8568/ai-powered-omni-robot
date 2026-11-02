@@ -8,6 +8,12 @@
   const knob = $('knob');
 
   const SEND_HZ = 20;
+  const GESTURE_NAMES = {
+    fist: 'nắm tay (dừng)', palm: 'xòe tay (dừng)',
+    point_up: 'chỉ lên (tiến)', point_down: 'chỉ xuống (lùi)',
+    point_left: 'chỉ trái (sang trái)', point_right: 'chỉ phải (sang phải)',
+    v_left: 'chữ V trái (xoay trái)', v_right: 'chữ V phải (xoay phải)',
+  };
   const input = { pad: { x: 0, y: 0 }, rot: 0, keys: new Set() };
   const ui = { mode: 'manual', estop: false, speed: 0.5, lastFrame: 0, camera: false };
   let ws = null;
@@ -63,6 +69,7 @@
     setChip('chip-camera', s.camera ? 'Camera: đang chạy' : 'Camera: chưa mở được', s.camera);
     setChip('chip-robot', s.robot ? 'Robot: đã kết nối' : 'Robot: chưa kết nối', s.robot);
     setChip('chip-fps', `${s.fps} khung/giây`, s.fps > 0);
+    setChip('chip-gesture', `Cử chỉ: ${GESTURE_NAMES[s.gesture] || 'không thấy tay'}`, !!s.gesture);
     setMode(s.mode, false);
     setEstop(s.estop);
     if (s.mode === 'gesture') showReadout(s.out.vx, s.out.vy, s.out.w);

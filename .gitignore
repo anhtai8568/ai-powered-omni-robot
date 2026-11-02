@@ -29,3 +29,5 @@ dist/
 # OS-generated files
 .DS_Store
 Thumbs.db
+# Model AI (tự tải về khi chạy lần đầu)
+ai/models/

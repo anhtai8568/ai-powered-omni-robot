@@ -85,13 +85,19 @@ Bấm **Cử chỉ tay** trên dashboard để bật. Ảnh đã lật gương, 
 
 | Cử chỉ | Robot |
 |---|---|
-| Nắm tay, hoặc xòe 4 ngón | Dừng (có hiệu lực ngay) |
+| Nắm tay, hoặc xòe 4 ngón | Dừng |
 | Ngón trỏ chỉ lên / xuống | Tiến / lùi |
 | Ngón trỏ chỉ trái / phải | Đi ngang trái / phải |
+| Ngón trỏ chỉ chéo (4 hướng) | Đi chéo theo hướng chỉ |
 | Chữ V (trỏ + giữa) chỉ trái / phải | Xoay trái / phải |
 | Không thấy tay, cử chỉ lạ | Dừng |
 
-Lệnh di chuyển chỉ có hiệu lực khi giữ cùng một cử chỉ 4 khung liên tiếp (khoảng 0.13 s), để tránh robot giật vì AI nhận sai 1–2 khung.
+Chống giật:
+
+- Cử chỉ di chuyển phải giữ 4 khung liên tiếp (khoảng 0.13 s), để bỏ qua các khung AI nhận sai.
+- Cử chỉ dừng phải giữ 6 khung (khoảng 0.2 s), để tay nắm/xòe thoáng qua khi đổi hướng không làm robot dừng.
+- Tốc độ thay đổi dần (tăng tối đa 2.0/s, giảm tối đa 4.0/s); đổi chiều thì phanh về 0 trước. Áp dụng cho cả chế độ thủ công.
+- Nút Dừng khẩn cấp và phím Space luôn dừng ngay lập tức.
 
 ## Quy ước lệnh điều khiển
 

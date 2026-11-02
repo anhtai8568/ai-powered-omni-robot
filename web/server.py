@@ -73,7 +73,7 @@ class State:
 state = State()
 cam = Camera(index=CAMERA_INDEX, width=640, height=480, fps=30, mirror=True)
 tracker = HandTracker()
-gesture_filter = GestureFilter(hold=4)
+gesture_filter = GestureFilter(hold=4, stop_hold=6)  # số khung cần giữ: di chuyển / dừng
 
 
 class RobotLink:

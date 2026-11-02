@@ -14,17 +14,22 @@ COMMANDS = {
     "v_left":      (0.0, 0.0, 1.0),
     "v_right":     (0.0, 0.0, -1.0),
 }
-STOP_GESTURES = {"fist", "palm"}
 
 
 class GestureFilter:
-    """Chống nhiễu: dừng có hiệu lực ngay, di chuyển phải thấy `hold` khung liên tiếp.
+    """Chống nhiễu: một cử chỉ chỉ được chấp nhận khi thấy đủ số khung liên tiếp.
 
-    AI thỉnh thoảng đoán sai 1-2 khung; nếu dùng thẳng thì robot giật cục.
+    - Di chuyển: `hold` khung (4 khung ~ 0.13 s ở 30 fps). AI thỉnh thoảng đoán
+      sai 1-2 khung; nếu dùng thẳng thì robot giật cục.
+    - Dừng (nắm tay, xòe tay, mất tay): `stop_hold` khung (6 khung ~ 0.2 s).
+      Lâu hơn di chuyển vì khi chuyển từ chỉ lên sang chỉ xuống, bàn tay thường
+      đi qua tư thế nắm/xòe hoặc mất dấu trong chốc lát. Nắm tay có chủ đích thì
+      giữ lâu hơn thế. Cần dừng ngay thì dùng nút Dừng khẩn cấp / phím Space.
     """
 
-    def __init__(self, hold=4):
+    def __init__(self, hold=4, stop_hold=6):
         self.hold = hold
+        self.stop_hold = stop_hold
         self._candidate = None
         self._count = 0
         self.stable = None
@@ -34,7 +39,8 @@ class GestureFilter:
             self._count += 1
         else:
             self._candidate, self._count = gesture, 1
-        if gesture in STOP_GESTURES or self._count >= self.hold:
+        need = self.hold if gesture in COMMANDS else self.stop_hold
+        if self._count >= need:
             self.stable = gesture
         return self.stable
 

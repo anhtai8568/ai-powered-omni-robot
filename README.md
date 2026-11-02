@@ -13,8 +13,8 @@ Camera laptop ──► AI nhận diện cử chỉ ──► Server (FastAPI) �
 - [x] Đọc camera độ trễ thấp (thread riêng, chỉ giữ khung mới nhất, tự mở lại khi mất camera)
 - [x] Dashboard web: video trực tiếp, cần điều khiển, phím W/A/S/D/Q/E, dừng khẩn cấp
 - [x] Vòng điều khiển 20 Hz, tự dừng robot khi mất lệnh quá 0.4 s
-- [ ] Tối ưu tốc độ khung hình stream
-- [ ] Nhận diện cử chỉ tay (MediaPipe Hands) và chuyển thành lệnh di chuyển
+- [x] Stream 30 khung/giây (tối đa của webcam)
+- [x] Nhận diện cử chỉ tay (MediaPipe Hand Landmarker) và chuyển thành lệnh di chuyển
 - [ ] Giao diện web mới, có hiệu ứng
 - [ ] Firmware ESP32: điều khiển motor, đọc encoder, PID tốc độ, nhận lệnh qua WiFi
 
@@ -43,7 +43,9 @@ Camera laptop ──► AI nhận diện cử chỉ ──► Server (FastAPI) �
 ## Cấu trúc thư mục
 
 ```
-ai/         camera.py: đọc camera laptop (sẽ thêm module nhận diện cử chỉ)
+ai/         camera.py: đọc camera laptop
+            gesture_recognition.py: tìm 21 điểm bàn tay, phân loại cử chỉ
+            gesture_to_command.py: lọc nhiễu, chuyển cử chỉ thành lệnh (vx, vy, w)
 web/        server.py: FastAPI + WebSocket; static/: giao diện dashboard
 firmware/   (sắp có) chương trình ESP32
 tests/      camera_fps_test.py: đo FPS qua từng khâu xử lý
@@ -73,8 +75,23 @@ Công cụ khác:
 
 ```bash
 python ai/camera.py              # xem thử camera, bấm q để thoát
+python ai/gesture_recognition.py # xem thử nhận diện cử chỉ, bấm q để thoát
 python tests/camera_fps_test.py  # đo FPS (tắt server trước)
 ```
+
+## Cử chỉ điều khiển
+
+Bấm **Cử chỉ tay** trên dashboard để bật. Ảnh đã lật gương, nên "trái" là bên trái của bạn.
+
+| Cử chỉ | Robot |
+|---|---|
+| Nắm tay, hoặc xòe 4 ngón | Dừng (có hiệu lực ngay) |
+| Ngón trỏ chỉ lên / xuống | Tiến / lùi |
+| Ngón trỏ chỉ trái / phải | Đi ngang trái / phải |
+| Chữ V (trỏ + giữa) chỉ trái / phải | Xoay trái / phải |
+| Không thấy tay, cử chỉ lạ | Dừng |
+
+Lệnh di chuyển chỉ có hiệu lực khi giữ cùng một cử chỉ 4 khung liên tiếp (khoảng 0.13 s), để tránh robot giật vì AI nhận sai 1–2 khung.
 
 ## Quy ước lệnh điều khiển
 

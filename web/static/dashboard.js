@@ -16,6 +16,10 @@
     fist: 'Nắm tay: dừng', palm: 'Xòe tay: dừng',
     point_up: 'Chỉ lên: tiến', point_down: 'Chỉ xuống: lùi',
     point_left: 'Chỉ trái: sang trái', point_right: 'Chỉ phải: sang phải',
+    point_up_left: 'Chỉ chéo trên trái: tiến chéo trái',
+    point_up_right: 'Chỉ chéo trên phải: tiến chéo phải',
+    point_down_left: 'Chỉ chéo dưới trái: lùi chéo trái',
+    point_down_right: 'Chỉ chéo dưới phải: lùi chéo phải',
     v_left: 'Chữ V trái: xoay trái', v_right: 'Chữ V phải: xoay phải',
   };
   const input = { pad: { x: 0, y: 0 }, rot: 0, keys: new Set() };

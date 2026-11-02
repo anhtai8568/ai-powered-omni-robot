@@ -4,13 +4,21 @@ Chuyển cử chỉ thành lệnh robot (vx, vy, w), quy ước ROS:
 
 Ảnh camera đã lật gương, nên "trái" trên màn hình là bên trái của người điều khiển.
 """
+import math
+
+# Đi chéo: vx = vy = 1/√2 để tổng tốc độ vẫn là 1 (nếu để 1 và 1 thì chéo nhanh hơn thẳng 41%)
+D = math.sqrt(0.5)
 
 # Mỗi cử chỉ -> hướng (vx, vy, w). Cử chỉ không có trong bảng (fist, palm, None) -> dừng.
 COMMANDS = {
-    "point_up":    (1.0, 0.0, 0.0),
-    "point_down":  (-1.0, 0.0, 0.0),
-    "point_left":  (0.0, 1.0, 0.0),
-    "point_right": (0.0, -1.0, 0.0),
+    "point_up":         (1.0, 0.0, 0.0),
+    "point_down":       (-1.0, 0.0, 0.0),
+    "point_left":       (0.0, 1.0, 0.0),
+    "point_right":      (0.0, -1.0, 0.0),
+    "point_up_left":    (D, D, 0.0),
+    "point_up_right":   (D, -D, 0.0),
+    "point_down_left":  (-D, D, 0.0),
+    "point_down_right": (-D, -D, 0.0),
     "v_left":      (0.0, 0.0, 1.0),
     "v_right":     (0.0, 0.0, -1.0),
 }

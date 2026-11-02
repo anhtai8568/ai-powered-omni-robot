@@ -1,16 +1,10 @@
 """
-Máy chủ web điều khiển robot omni 4 bánh (camera laptop).
+Server điều khiển robot: camera -> AI cử chỉ -> lệnh robot, kèm dashboard web.
 
-Chạy (từ thư mục web/):   python server.py
-Mở dashboard:             http://127.0.0.1:8000/
+Chạy: python web/server.py, mở http://127.0.0.1:8000/
+Biến môi trường: CAMERA_INDEX (mặc định 0), HOST (0.0.0.0 để máy khác truy cập), PORT (8000)
 
-Biến môi trường (tùy chọn):
-  CAMERA_INDEX=1   chọn camera khác (mặc định 0)
-  HOST=0.0.0.0     cho máy khác trong mạng (vd iPhone) mở dashboard để điều khiển
-  PORT=8000
-
-Quy ước lệnh (theo chuẩn ROS), mỗi giá trị nằm trong -1..1:
-  vx > 0  tiến        vy > 0  đi ngang sang trái        w > 0  xoay ngược chiều kim đồng hồ
+Lệnh (vx, vy, w) theo chuẩn ROS, trong -1..1: vx > 0 tiến, vy > 0 sang trái, w > 0 xoay trái.
 """
 import asyncio
 import json

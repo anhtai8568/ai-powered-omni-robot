@@ -1,33 +1,49 @@
 # AI-Powered Omni Robot
 
-Robot omni 4 bánh điều khiển bằng **cử chỉ tay** qua camera laptop, kèm dashboard web để giám sát và điều khiển thủ công.
+Robot omni 4 bánh (bánh chéo 45°) điều khiển bằng cử chỉ tay qua camera laptop.
 
 ```
-Camera laptop ──► AI nhận diện cử chỉ ──► Server (FastAPI) ──WiFi──► ESP32 ──► 4 motor + encoder
-                                              │
-                                              └──► Dashboard web (video + điều khiển)
+Camera ──► AI cử chỉ ──► Server ──WiFi──► ESP32 ──► 4 motor
+                           └──► Dashboard web
 ```
 
-## Tính năng
+**Đã xong:** stream camera 30 FPS, nhận diện cử chỉ, dashboard điều khiển.
+**Đang làm:** firmware ESP32 (PlatformIO): motor, encoder, PID, nhận lệnh qua WiFi.
 
-- [x] Đọc camera độ trễ thấp (thread riêng, chỉ giữ khung mới nhất, tự mở lại khi mất camera)
-- [x] Dashboard web: video trực tiếp, cần điều khiển, phím W/A/S/D/Q/E, dừng khẩn cấp
-- [x] Vòng điều khiển 20 Hz, tự dừng robot khi mất lệnh quá 0.4 s
-- [x] Stream 30 khung/giây (tối đa của webcam)
-- [x] Nhận diện cử chỉ tay (MediaPipe Hand Landmarker) và chuyển thành lệnh di chuyển
-- [ ] Giao diện web mới, có hiệu ứng
-- [ ] Firmware ESP32: điều khiển motor, đọc encoder, PID tốc độ, nhận lệnh qua WiFi
+## Chạy
+
+```bash
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+python web/server.py            # mở http://127.0.0.1:8000/
+```
+
+Tùy chọn: `CAMERA_INDEX=1` chọn camera khác, `HOST=0.0.0.0` cho máy khác trong mạng truy cập.
+
+Công cụ thử riêng từng phần (bấm `q` để thoát):
+
+```bash
+python ai/gesture_recognition.py   # xem AI nhận diện tay
+python tests/camera_fps_test.py    # đo FPS camera (tắt server trước)
+```
+
+## Cử chỉ
+
+Bật bằng nút **Cử chỉ tay** trên dashboard. Ảnh đã lật gương: "trái" là bên trái của bạn.
+
+| Cử chỉ | Robot |
+|---|---|
+| Ngón trỏ chỉ 8 hướng (lên, xuống, trái, phải, 4 góc chéo) | Đi theo hướng chỉ |
+| Chữ V (trỏ + giữa) chỉ trái / phải | Xoay trái / phải |
+| Nắm tay, xòe tay, không thấy tay | Dừng |
+
+Chống giật: cử chỉ phải giữ ổn định khoảng 0.15 s mới có hiệu lực, tốc độ tăng giảm dần. Nút **Dừng khẩn cấp** (phím Space) luôn dừng ngay.
+
+Lệnh gửi robot theo chuẩn ROS, mỗi giá trị trong `-1..1`: `vx > 0` tiến, `vy > 0` sang trái, `w > 0` xoay trái.
 
 ## Phần cứng
 
-| Linh kiện | Số lượng |
-|---|---|
-| ESP32 DevKit V1 | 1 |
-| Driver L298N | 2 (một cho 2 bánh trước, một cho 2 bánh sau) |
-| Motor DC có encoder + bánh omni | 4 |
-| Laptop có webcam | 1 |
-
-### Sơ đồ chân ESP32
+ESP32 DevKit V1, 2 driver L298N (trước / sau), 4 motor DC có encoder.
 
 ![Sơ đồ chân](docs/pinout.png)
 
@@ -38,73 +54,13 @@ Camera laptop ──► AI nhận diện cử chỉ ──► Server (FastAPI) �
 | Sau trái | 21 | 19 | 18 | 32 | 33 |
 | Sau phải | 17 | 16 | 4 | 14 | 5 |
 
-> GPIO 34, 35, 36, 39 chỉ là chân input và không có điện trở kéo lên trong. Nếu encoder là loại open-collector thì cần gắn điện trở kéo lên ngoài (10 kΩ lên 3.3 V).
+GPIO 34, 35, 36, 39 không có điện trở kéo lên trong: encoder open-collector cần điện trở 10 kΩ lên 3.3 V.
 
-## Cấu trúc thư mục
+## Thư mục
 
-```
-ai/         camera.py: đọc camera laptop
-            gesture_recognition.py: tìm 21 điểm bàn tay, phân loại cử chỉ
-            gesture_to_command.py: lọc nhiễu, chuyển cử chỉ thành lệnh (vx, vy, w)
-web/        server.py: FastAPI + WebSocket; static/: giao diện dashboard
-firmware/   (sắp có) chương trình ESP32
-tests/      camera_fps_test.py: đo FPS qua từng khâu xử lý
-docs/       sơ đồ chân
-```
-
-## Cài đặt và chạy
-
-```bash
-git clone git@github.com:anhtai8568/ai-powered-omni-robot.git
-cd ai-powered-omni-robot
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-```
-
-Chạy dashboard:
-
-```bash
-python web/server.py
-# mở http://127.0.0.1:8000/
-```
-
-Tùy chọn qua biến môi trường: `CAMERA_INDEX=1` (chọn camera khác), `HOST=0.0.0.0` (cho thiết bị khác trong mạng truy cập), `PORT=8000`.
-
-Công cụ khác:
-
-```bash
-python ai/camera.py              # xem thử camera, bấm q để thoát
-python ai/gesture_recognition.py # xem thử nhận diện cử chỉ, bấm q để thoát
-python tests/camera_fps_test.py  # đo FPS (tắt server trước)
-```
-
-## Cử chỉ điều khiển
-
-Bấm **Cử chỉ tay** trên dashboard để bật. Ảnh đã lật gương, nên "trái" là bên trái của bạn.
-
-| Cử chỉ | Robot |
+| | |
 |---|---|
-| Nắm tay, hoặc xòe 4 ngón | Dừng |
-| Ngón trỏ chỉ lên / xuống | Tiến / lùi |
-| Ngón trỏ chỉ trái / phải | Đi ngang trái / phải |
-| Ngón trỏ chỉ chéo (4 hướng) | Đi chéo theo hướng chỉ |
-| Chữ V (trỏ + giữa) chỉ trái / phải | Xoay trái / phải |
-| Không thấy tay, cử chỉ lạ | Dừng |
-
-Chống giật:
-
-- Cử chỉ di chuyển phải giữ 4 khung liên tiếp (khoảng 0.13 s), để bỏ qua các khung AI nhận sai.
-- Cử chỉ dừng phải giữ 6 khung (khoảng 0.2 s), để tay nắm/xòe thoáng qua khi đổi hướng không làm robot dừng.
-- Tốc độ thay đổi dần (tăng tối đa 2.0/s, giảm tối đa 4.0/s); đổi chiều thì phanh về 0 trước. Áp dụng cho cả chế độ thủ công.
-- Nút Dừng khẩn cấp và phím Space luôn dừng ngay lập tức.
-
-## Quy ước lệnh điều khiển
-
-Theo chuẩn ROS, mỗi giá trị nằm trong khoảng `-1..1`:
-
-| Lệnh | Ý nghĩa |
-|---|---|
-| `vx > 0` | tiến |
-| `vy > 0` | đi ngang sang trái |
-| `w > 0` | xoay ngược chiều kim đồng hồ |
+| `ai/` | đọc camera, nhận diện cử chỉ, chuyển cử chỉ thành lệnh |
+| `web/` | server FastAPI và giao diện dashboard |
+| `tests/` | đo FPS camera |
+| `docs/` | sơ đồ chân |

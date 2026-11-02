@@ -3,7 +3,9 @@
 
 - Đọc trong thread riêng và chỉ giữ khung MỚI NHẤT (không xếp hàng), nên AI/web
   chậm hơn camera thì khung cũ bị bỏ, hình không bị trễ dần.
-- Dùng định dạng MJPG và bộ đệm 1 khung để driver không tích hàng đợi.
+- Dùng định dạng MJPG, bộ đệm driver 2 khung. Không dùng 1: khi chương trình
+  đang giữ khung duy nhất thì camera không có chỗ ghi khung kế tiếp và bỏ nó,
+  FPS rơi đúng một nửa (30 -> 15).
 - Camera bị rút/đang bận thì tự thử mở lại mỗi 2 giây.
 """
 import sys
@@ -61,7 +63,7 @@ class Camera:
         cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.width)
         cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.height)
         cap.set(cv2.CAP_PROP_FPS, self.fps)
-        cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+        cap.set(cv2.CAP_PROP_BUFFERSIZE, 2)
         return cap
 
     def _publish(self, frame):

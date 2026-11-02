@@ -88,34 +88,21 @@ class Camera:
             cap.release()
             self.opened = False
 
+
 if __name__ == "__main__":
-    camera = Camera(index=0, width=640, height=480, fps=30)
-    camera.start()
-
-    last_seq = -1
-
+    # Xem thử camera: python ai/camera.py  (bấm q để thoát)
+    cam = Camera().start()
+    last = -1
     try:
-        print("Starting laptop camera...")
-        print("Press 'q' to quit.")
-
         while True:
-            last_seq, frame = camera.read(
-                last_seq=last_seq,
-                timeout=1.0
-            )
-
+            last, frame = cam.read(last)
             if frame is None:
                 continue
-
             cv2.imshow("Laptop Camera", frame)
-
             if cv2.waitKey(1) & 0xFF == ord("q"):
                 break
-
     except KeyboardInterrupt:
-        print("\nStopping camera...")
-
+        pass
     finally:
-        camera.stop()
+        cam.stop()
         cv2.destroyAllWindows()
-        print("Camera stopped.")

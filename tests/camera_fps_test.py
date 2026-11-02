@@ -74,4 +74,3 @@ if __name__ == "__main__":
     raw_test("2. OpenCV thô, ép MJPG            ", mjpg=True)
     camera_class_test("3. Lớp Camera (ai/camera.py)      ", encode=False)
     camera_class_test("4. Lớp Camera + mã hóa JPEG       ", encode=True)
-    print("\nĐọc kết quả: xem hướng dẫn trong tin nhắn.")

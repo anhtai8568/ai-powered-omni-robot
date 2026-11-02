@@ -1,1 +1,0 @@
-// điều khiển tốc độ từng bánh

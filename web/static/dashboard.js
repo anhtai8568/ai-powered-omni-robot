@@ -11,7 +11,6 @@
   const input = { pad: { x: 0, y: 0 }, rot: 0, keys: new Set() };
   const ui = { mode: 'manual', estop: false, speed: 0.5, lastFrame: 0, camera: false };
   let ws = null;
-  let seq = 0;
   let decoding = false;
 
   // ---------- Kết nối ----------
@@ -159,7 +158,7 @@
     if (ui.mode === 'manual') {
       const c = current();
       showReadout(c.vx, c.vy, c.w);
-      send({ type: 'cmd', vx: c.vx, vy: c.vy, w: c.w, seq: ++seq });
+      send({ type: 'cmd', vx: c.vx, vy: c.vy, w: c.w });
     }
     // Gợi ý khi chưa có hình
     const noVideo = performance.now() - ui.lastFrame > 1500;

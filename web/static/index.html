@@ -3,54 +3,92 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Điều khiển robot omni</title>
+  <title>Robot omni</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;700&display=swap">
   <link rel="stylesheet" href="/static/style.css">
 </head>
-<body>
-  <header class="bar">
-    <h1>Robot omni 4 bánh</h1>
-    <ul class="chips" aria-label="Trạng thái kết nối">
-      <li id="chip-link" data-ok="false">Máy chủ: đang nối</li>
-      <li id="chip-camera" data-ok="false">Camera: chưa mở được</li>
-      <li id="chip-robot" data-ok="false">Robot: chưa kết nối</li>
-      <li id="chip-fps" data-ok="false">0 khung/giây</li>
-      <li id="chip-gesture" data-ok="false">Cử chỉ: không thấy tay</li>
+<body data-mode="manual">
+  <header class="top">
+    <h1>Robot omni</h1>
+    <ul class="status" aria-label="Trạng thái kết nối">
+      <li id="st-link" data-ok="false">Máy chủ</li>
+      <li id="st-camera" data-ok="false">Camera</li>
+      <li id="st-robot" data-ok="false">Robot</li>
+      <li id="st-fps" data-ok="false">0 khung/giây</li>
     </ul>
-    <div class="seg" role="group" aria-label="Chế độ điều khiển">
+    <div class="mode" role="group" aria-label="Chế độ điều khiển">
       <button id="mode-manual" aria-pressed="true">Thủ công</button>
       <button id="mode-gesture" aria-pressed="false">Cử chỉ tay</button>
     </div>
   </header>
 
-  <main class="layout">
-    <section class="view">
+  <main class="console">
+    <section class="screen">
       <canvas id="view" width="640" height="480" aria-label="Hình từ camera laptop"></canvas>
       <p id="hint" class="hint"></p>
     </section>
 
-    <aside class="controls">
-      <div id="pad" class="pad" aria-label="Cần điều khiển: kéo lên để tiến, sang ngang để đi ngang">
-        <div id="knob" class="knob"></div>
-      </div>
+    <aside class="panel">
+      <figure class="motion" aria-label="Hướng di chuyển robot đang nhận">
+        <svg viewBox="-100 -100 200 200" aria-hidden="true">
+          <defs>
+            <marker id="head" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+              <path d="M0 0 L10 5 L0 10 z" class="head"/>
+            </marker>
+          </defs>
+          <circle r="85" class="ring"/>
+          <g class="robot">
+            <rect x="-34" y="-34" width="68" height="68" rx="6" class="body"/>
+            <path d="M-10 -24 L0 -34 L10 -24" class="nose"/>
+            <rect x="-9" y="-4" width="18" height="8" rx="2" class="wheel" transform="translate(-34 -34) rotate(45)"/>
+            <rect x="-9" y="-4" width="18" height="8" rx="2" class="wheel" transform="translate(34 -34) rotate(-45)"/>
+            <rect x="-9" y="-4" width="18" height="8" rx="2" class="wheel" transform="translate(-34 34) rotate(-45)"/>
+            <rect x="-9" y="-4" width="18" height="8" rx="2" class="wheel" transform="translate(34 34) rotate(45)"/>
+          </g>
+          <path id="arc" class="arc" marker-end="url(#head)"/>
+          <line id="vec" x1="0" y1="0" x2="0" y2="0" class="vec" marker-end="url(#head)"/>
+        </svg>
+        <figcaption id="gesture-now">Không thấy tay</figcaption>
+      </figure>
 
-      <div class="rot">
-        <button id="rot-l">Xoay trái</button>
-        <button id="rot-r">Xoay phải</button>
-      </div>
-
-      <label class="speed">
-        <span>Tốc độ tối đa <output id="speed-out">50%</output></span>
-        <input id="speed" type="range" min="10" max="100" value="50">
-      </label>
-
-      <dl class="readout" aria-label="Lệnh hiện tại">
-        <div><dt>vx (tiến)</dt><dd id="r-vx">0.00</dd></div>
-        <div><dt>vy (ngang)</dt><dd id="r-vy">0.00</dd></div>
-        <div><dt>w (xoay)</dt><dd id="r-w">0.00</dd></div>
+      <dl class="readout" aria-label="Lệnh robot đang nhận">
+        <div><dt>Tiến <span>vx</span></dt><dd id="r-vx">0.00</dd></div>
+        <div><dt>Ngang <span>vy</span></dt><dd id="r-vy">0.00</dd></div>
+        <div><dt>Xoay <span>w</span></dt><dd id="r-w">0.00</dd></div>
       </dl>
 
+      <div class="input">
+        <div class="drive manual-only">
+          <div id="pad" class="pad" aria-label="Cần điều khiển: kéo lên để tiến, sang ngang để đi ngang">
+            <div id="knob" class="knob"></div>
+          </div>
+          <div class="rot">
+            <button id="rot-l">Xoay trái</button>
+            <button id="rot-r">Xoay phải</button>
+          </div>
+        </div>
+
+        <ul class="gestures gesture-only" aria-label="Bảng cử chỉ">
+          <li data-g="fist palm">Nắm tay hoặc xòe tay <b>Dừng</b></li>
+          <li data-g="point_up">Ngón trỏ chỉ lên <b>Tiến</b></li>
+          <li data-g="point_down">Ngón trỏ chỉ xuống <b>Lùi</b></li>
+          <li data-g="point_left">Ngón trỏ chỉ trái <b>Sang trái</b></li>
+          <li data-g="point_right">Ngón trỏ chỉ phải <b>Sang phải</b></li>
+          <li data-g="v_left">Chữ V chỉ trái <b>Xoay trái</b></li>
+          <li data-g="v_right">Chữ V chỉ phải <b>Xoay phải</b></li>
+        </ul>
+
+        <label class="speed manual-only">
+          <span>Tốc độ</span>
+          <input id="speed" type="range" min="10" max="100" value="50">
+          <output id="speed-out">50%</output>
+        </label>
+      </div>
+
       <button id="estop" class="estop" aria-pressed="false">Dừng khẩn cấp</button>
-      <p class="keys">Phím: W/S tiến lùi, A/D đi ngang, Q/E xoay, Space dừng khẩn cấp.</p>
+      <p class="keys manual-only">Phím W A S D Q E để lái, Space để dừng</p>
     </aside>
   </main>
 

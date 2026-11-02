@@ -130,19 +130,23 @@ def status_msg() -> dict:
         "robot": robot.connected,
         "mode": state.mode,
         "estop": state.estop,
-        "gesture": state.gesture,
         "fps": round(state.fps, 1),
-        "out": state.out,
     }
 
 
-async def broadcast_status():
-    msg = json.dumps(status_msg())
+async def broadcast_json(msg: dict):
+    if not state.dashboards:
+        return
+    text = json.dumps(msg)
     for ws in list(state.dashboards):
         try:
-            await ws.send_text(msg)
+            await ws.send_text(text)
         except Exception:
             state.dashboards.discard(ws)
+
+
+async def broadcast_status():
+    await broadcast_json(status_msg())
 
 
 async def broadcast_frame(data: bytes):
@@ -168,7 +172,7 @@ async def video_loop():
 
 
 async def control_loop():
-    """Mỗi 1/CONTROL_HZ giây chọn lệnh đầu ra và gửi cho robot.
+    """Mỗi 1/CONTROL_HZ giây chọn lệnh đầu ra, gửi cho robot và cho dashboard.
 
     Không có lệnh mới trong CMD_TIMEOUT giây (mất kết nối, treo trình duyệt,
     AI không thấy tay...) thì đầu ra tự về 0.
@@ -186,6 +190,8 @@ async def control_loop():
                 vx, vy, w = state.gesture_cmd
         state.out = {"vx": vx, "vy": vy, "w": w}
         await robot.send(state.out)
+        # Lệnh thật gửi cho robot + cử chỉ, mỗi tick (20 lần/giây) để web hiển thị tức thì
+        await broadcast_json({"type": "telemetry", "out": state.out, "gesture": state.gesture})
 
         tick += 1
         if tick % (CONTROL_HZ // 2) == 0:  # 2 lần/giây

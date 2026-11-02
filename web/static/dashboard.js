@@ -1,5 +1,9 @@
 // Dashboard điều khiển robot.
 // Quy ước (chuẩn ROS): vx > 0 tiến, vy > 0 sang trái, w > 0 xoay ngược chiều kim đồng hồ.
+//
+// Tin từ server:
+//   status    (2 lần/giây)  kết nối, camera, fps, chế độ, dừng khẩn cấp
+//   telemetry (20 lần/giây) lệnh thật đang gửi cho robot + cử chỉ AI thấy
 (() => {
   const $ = (id) => document.getElementById(id);
   const canvas = $('view');
@@ -9,10 +13,10 @@
 
   const SEND_HZ = 20;
   const GESTURE_NAMES = {
-    fist: 'nắm tay (dừng)', palm: 'xòe tay (dừng)',
-    point_up: 'chỉ lên (tiến)', point_down: 'chỉ xuống (lùi)',
-    point_left: 'chỉ trái (sang trái)', point_right: 'chỉ phải (sang phải)',
-    v_left: 'chữ V trái (xoay trái)', v_right: 'chữ V phải (xoay phải)',
+    fist: 'Nắm tay: dừng', palm: 'Xòe tay: dừng',
+    point_up: 'Chỉ lên: tiến', point_down: 'Chỉ xuống: lùi',
+    point_left: 'Chỉ trái: sang trái', point_right: 'Chỉ phải: sang phải',
+    v_left: 'Chữ V trái: xoay trái', v_right: 'Chữ V phải: xoay phải',
   };
   const input = { pad: { x: 0, y: 0 }, rot: 0, keys: new Set() };
   const ui = { mode: 'manual', estop: false, speed: 0.5, lastFrame: 0, camera: false };
@@ -20,7 +24,7 @@
   let decoding = false;
 
   // ---------- Kết nối ----------
-  function setChip(id, text, ok) {
+  function setStatus(id, text, ok) {
     const el = $(id);
     el.textContent = text;
     el.dataset.ok = String(ok);
@@ -29,14 +33,16 @@
   function connect() {
     const proto = location.protocol === 'https:' ? 'wss' : 'ws';
     ws = new WebSocket(`${proto}://${location.host}/ws/dashboard`);
-    ws.onopen = () => setChip('chip-link', 'Máy chủ: đã kết nối', true);
+    ws.onopen = () => setStatus('st-link', 'Máy chủ', true);
     ws.onclose = () => {
-      setChip('chip-link', 'Máy chủ: mất kết nối, đang nối lại', false);
+      setStatus('st-link', 'Máy chủ: đang nối lại', false);
       setTimeout(connect, 1000);
     };
     ws.onmessage = (e) => {
-      if (typeof e.data === 'string') onStatus(JSON.parse(e.data));
-      else drawFrame(e.data);
+      if (typeof e.data !== 'string') return drawFrame(e.data);
+      const msg = JSON.parse(e.data);
+      if (msg.type === 'status') onStatus(msg);
+      else if (msg.type === 'telemetry') onTelemetry(msg);
     };
   }
 
@@ -63,23 +69,53 @@
     }
   }
 
-  // ---------- Trạng thái từ máy chủ ----------
+  // ---------- Tin từ server ----------
   function onStatus(s) {
     ui.camera = s.camera;
-    setChip('chip-camera', s.camera ? 'Camera: đang chạy' : 'Camera: chưa mở được', s.camera);
-    setChip('chip-robot', s.robot ? 'Robot: đã kết nối' : 'Robot: chưa kết nối', s.robot);
-    setChip('chip-fps', `${s.fps} khung/giây`, s.fps > 0);
-    setChip('chip-gesture', `Cử chỉ: ${GESTURE_NAMES[s.gesture] || 'không thấy tay'}`, !!s.gesture);
+    setStatus('st-camera', s.camera ? 'Camera' : 'Camera: chưa mở được', s.camera);
+    setStatus('st-robot', s.robot ? 'Robot' : 'Robot: chưa kết nối', s.robot);
+    setStatus('st-fps', `${s.fps} khung/giây`, s.fps > 0);
     setMode(s.mode, false);
     setEstop(s.estop);
-    if (s.mode === 'gesture') showReadout(s.out.vx, s.out.vy, s.out.w);
+  }
+
+  function onTelemetry({ out, gesture }) {
+    $('r-vx').textContent = out.vx.toFixed(2);
+    $('r-vy').textContent = out.vy.toFixed(2);
+    $('r-w').textContent = out.w.toFixed(2);
+    drawMotion(out);
+    $('gesture-now').textContent = GESTURE_NAMES[gesture] || 'Không thấy tay';
+    document.querySelectorAll('.gestures li').forEach((li) => {
+      li.setAttribute('aria-current', String(!!gesture && li.dataset.g.split(' ').includes(gesture)));
+    });
+  }
+
+  // Sơ đồ nhìn từ trên xuống, mũi robot hướng lên màn hình.
+  // Mũi tên = (vx, vy), cung tròn = w. Độ dài tỉ lệ với tốc độ (1.0 = tối đa).
+  function drawMotion({ vx, vy, w }) {
+    const vec = $('vec');
+    const R = 70;
+    vec.setAttribute('x2', -vy * R); // vy > 0 là sang trái
+    vec.setAttribute('y2', -vx * R); // vx > 0 là lên trên màn hình
+    vec.style.visibility = Math.hypot(vx, vy) > 0.01 ? 'visible' : 'hidden';
+
+    const arc = $('arc');
+    if (Math.abs(w) < 0.01) {
+      arc.removeAttribute('d');
+      return;
+    }
+    const r = 85;
+    const end = Math.PI / 2 + Math.max(-0.95, Math.min(0.95, w)) * Math.PI; // bắt đầu ở đỉnh vòng
+    const x = r * Math.cos(end);
+    const y = -r * Math.sin(end);
+    arc.setAttribute('d', `M 0 ${-r} A ${r} ${r} 0 0 ${w > 0 ? 0 : 1} ${x.toFixed(1)} ${y.toFixed(1)}`);
   }
 
   function setMode(mode, notify) {
     ui.mode = mode;
+    document.body.dataset.mode = mode;
     $('mode-manual').setAttribute('aria-pressed', String(mode === 'manual'));
     $('mode-gesture').setAttribute('aria-pressed', String(mode === 'gesture'));
-    pad.dataset.disabled = String(mode !== 'manual');
     if (notify) send({ type: 'mode', mode });
   }
 
@@ -138,20 +174,14 @@
   window.addEventListener('keyup', (e) => input.keys.delete(e.key.toLowerCase()));
   window.addEventListener('blur', () => input.keys.clear());
 
-  // ---------- Tính lệnh và gửi định kỳ ----------
+  // ---------- Tính lệnh thủ công và gửi định kỳ ----------
   function current() {
     const k = input.keys;
-    let fwd = input.pad.y + (k.has('w') ? 1 : 0) - (k.has('s') ? 1 : 0);
-    let left = -input.pad.x + (k.has('a') ? 1 : 0) - (k.has('d') ? 1 : 0);
-    let turn = input.rot + (k.has('q') ? 1 : 0) - (k.has('e') ? 1 : 0);
+    const fwd = input.pad.y + (k.has('w') ? 1 : 0) - (k.has('s') ? 1 : 0);
+    const left = -input.pad.x + (k.has('a') ? 1 : 0) - (k.has('d') ? 1 : 0);
+    const turn = input.rot + (k.has('q') ? 1 : 0) - (k.has('e') ? 1 : 0);
     const c = (v) => Math.max(-1, Math.min(1, v)) * ui.speed;
     return { vx: c(fwd), vy: c(left), w: c(turn) };
-  }
-
-  function showReadout(vx, vy, w) {
-    $('r-vx').textContent = vx.toFixed(2);
-    $('r-vy').textContent = vy.toFixed(2);
-    $('r-w').textContent = w.toFixed(2);
   }
 
   function showKnob() {
@@ -161,11 +191,9 @@
   }
 
   setInterval(() => {
-    showKnob();
     if (ui.mode === 'manual') {
-      const c = current();
-      showReadout(c.vx, c.vy, c.w);
-      send({ type: 'cmd', vx: c.vx, vy: c.vy, w: c.w });
+      showKnob();
+      send({ type: 'cmd', ...current() });
     }
     // Gợi ý khi chưa có hình
     const noVideo = performance.now() - ui.lastFrame > 1500;

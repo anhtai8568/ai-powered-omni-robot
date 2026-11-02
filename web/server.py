@@ -43,6 +43,25 @@ CONTROL_HZ = 20       # tần số vòng điều khiển gửi lệnh ra robot
 CMD_TIMEOUT = 0.4     # giây; quá thời gian này không có lệnh mới -> dừng robot
 JPEG_QUALITY = 70
 GESTURE_SPEED = 0.5   # tốc độ khi điều khiển bằng cử chỉ (0..1)
+MAX_ACCEL = 2.0       # tăng tốc tối đa, đơn vị lệnh/giây (0 -> 1 mất 0.5 s)
+MAX_DECEL = 4.0       # giảm tốc tối đa (1 -> 0 mất 0.25 s), nhanh hơn tăng tốc để dừng kịp
+
+
+def ramp(cur: float, target: float, dt: float) -> float:
+    """Đưa `cur` tiến dần về `target`, không đổi quá nhanh (giới hạn gia tốc).
+
+    Tốc độ nhảy bậc làm 4 motor không giảm/tăng đều nhau -> robot omni bị xoay
+    lệch, con lăn trượt, dòng điện motor tăng vọt khi đảo chiều. Khi đổi chiều
+    (tiến -> lùi) thì phanh về 0 trước rồi mới tăng tốc theo chiều mới.
+    """
+    if cur * target < 0:                  # đổi chiều: phanh về 0 trước
+        goal, rate = 0.0, MAX_DECEL
+    elif abs(target) < abs(cur):          # chậm lại
+        goal, rate = target, MAX_DECEL
+    else:                                 # nhanh lên
+        goal, rate = target, MAX_ACCEL
+    step = rate * dt
+    return cur + max(-step, min(step, goal - cur))
 
 
 def clamp(v, lo=-1.0, hi=1.0) -> float:
@@ -175,7 +194,8 @@ async def control_loop():
     """Mỗi 1/CONTROL_HZ giây chọn lệnh đầu ra, gửi cho robot và cho dashboard.
 
     Không có lệnh mới trong CMD_TIMEOUT giây (mất kết nối, treo trình duyệt,
-    AI không thấy tay...) thì đầu ra tự về 0.
+    AI không thấy tay...) thì đầu ra tự về 0 (qua bộ giới hạn gia tốc).
+    Dừng khẩn cấp thì về 0 ngay lập tức, không đi qua bộ giới hạn.
     """
     period = 1.0 / CONTROL_HZ
     tick = 0
@@ -188,7 +208,11 @@ async def control_loop():
                 vx, vy, w = state.manual_cmd
             elif state.mode == "gesture" and now - state.gesture_ts < CMD_TIMEOUT:
                 vx, vy, w = state.gesture_cmd
-        state.out = {"vx": vx, "vy": vy, "w": w}
+        if state.estop:
+            state.out = {"vx": 0.0, "vy": 0.0, "w": 0.0}
+        else:
+            state.out = {k: ramp(state.out[k], v, period)
+                         for k, v in (("vx", vx), ("vy", vy), ("w", w))}
         await robot.send(state.out)
         # Lệnh thật gửi cho robot + cử chỉ, mỗi tick (20 lần/giây) để web hiển thị tức thì
         await broadcast_json({"type": "telemetry", "out": state.out, "gesture": state.gesture})

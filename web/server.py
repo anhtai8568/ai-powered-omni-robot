@@ -212,6 +212,15 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 
+@app.middleware("http")
+async def no_cache(request, call_next):
+    # Bắt trình duyệt hỏi lại server mỗi lần tải (file không đổi thì chỉ trả 304),
+    # để sửa HTML/JS/CSS xong là thấy ngay, không bị dính bản cũ trong cache.
+    response = await call_next(request)
+    response.headers["Cache-Control"] = "no-cache"
+    return response
+
+
 @app.get("/")
 async def index():
     return FileResponse(STATIC / "index.html")

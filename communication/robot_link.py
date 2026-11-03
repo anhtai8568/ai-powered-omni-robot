@@ -4,7 +4,8 @@ Gửi lệnh (vx, vy, w) từ laptop tới ESP32 qua UDP.
 ESP32 tự phát WiFi "omni-robot" (IP cố định 192.168.4.1); laptop bắt vào WiFi đó.
 Giao thức (xem firmware/src/command_link.h):
   laptop -> ESP32:  "C <seq> <vx> <vy> <w>"
-  ESP32 -> laptop:  "A <seq>"   -> biết robot còn sống + đo độ trễ khứ hồi (RTT)
+  ESP32 -> laptop:  "A <seq> <muốn đo pwm> x 4 bánh"
+                    -> biết robot còn sống, đo độ trễ khứ hồi (RTT), lấy số liệu bánh để ghi log
 
 server.py tự dùng class RobotLink, không cần chạy file này.
 Chạy trực tiếp chỉ để thử đường truyền khi KHÔNG chạy server (server đang giữ quyền điều
@@ -23,6 +24,7 @@ class RobotLink(asyncio.DatagramProtocol):
     def __init__(self, host=ROBOT_HOST, port=ROBOT_PORT):
         self.addr = (host, port)
         self.rtt_ms = None
+        self.wheels = None       # [muốn, đo, pwm] x 4 bánh, từ gói trả lời mới nhất
         self._transport = None
         self._seq = 0
         self._sent = {}          # seq -> thời điểm gửi, để tính RTT
@@ -57,11 +59,16 @@ class RobotLink(asyncio.DatagramProtocol):
 
     def datagram_received(self, data, addr):
         parts = data.decode(errors="ignore").split()
-        if len(parts) == 2 and parts[0] == "A" and parts[1].isdigit():
+        if len(parts) >= 2 and parts[0] == "A" and parts[1].isdigit():
             sent = self._sent.pop(int(parts[1]), None)
             if sent is not None:
                 self._last_ack = time.monotonic()
                 self.rtt_ms = (self._last_ack - sent) * 1000
+                if len(parts) == 14:
+                    try:
+                        self.wheels = [float(x) for x in parts[2:]]
+                    except ValueError:
+                        pass
 
     def error_received(self, exc):
         pass  # vd ICMP "không tới được": coi như mất gói

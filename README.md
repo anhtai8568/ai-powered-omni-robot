@@ -2,10 +2,6 @@
 
 Robot omni 4 bánh (bánh chéo 45°) điều khiển bằng cử chỉ tay qua camera laptop.
 
-```
-Camera ──► AI cử chỉ ──► Server ──WiFi──► ESP32 ──► PID ──► 4 motor
-                           └──► Dashboard web
-```
 
 ## Cài đặt
 
@@ -23,8 +19,12 @@ pio run -t upload
 
 ## Chạy
 
-1. Bật robot, laptop bắt WiFi **omni-robot** (mật khẩu `omnirobot`). Không cần Internet.
-2. `python web/server.py`, mở http://127.0.0.1:8000/. Ô "Robot" xanh là đã kết nối.
+```bash
+nmcli device wifi connect omni-robot password omnirobot   # bật robot trước, không cần Internet
+python web/server.py                                       # mở http://127.0.0.1:8000/
+```
+
+Ô "Robot" xanh là đã kết nối. Xong thì nối lại WiFi cũ: `nmcli connection up "<tên WiFi>"`.
 
 ## Cử chỉ
 

@@ -81,6 +81,8 @@
     setStatus('st-fps', `${s.fps} khung/giây`, s.fps > 0);
     setMode(s.mode, false);
     setEstop(s.estop);
+    // Đồng bộ thanh tốc độ với server (trừ lúc đang kéo)
+    if (s.speed !== undefined && document.activeElement !== $('speed')) showSpeed(Math.round(s.speed * 100));
   }
 
   function onTelemetry({ out, gesture }) {
@@ -135,9 +137,15 @@
   $('estop').onclick = () => send({ type: 'estop', on: !ui.estop });
 
   // ---------- Tốc độ ----------
+  // Một thanh cho cả 2 chế độ: thủ công thì nhân ngay ở đây, cử chỉ thì server dùng giá trị gửi lên
+  function showSpeed(pct) {
+    ui.speed = pct / 100;
+    $('speed').value = pct;
+    $('speed-out').textContent = `${pct}%`;
+  }
   $('speed').oninput = (e) => {
-    ui.speed = e.target.value / 100;
-    $('speed-out').textContent = `${e.target.value}%`;
+    showSpeed(Number(e.target.value));
+    send({ type: 'speed', value: ui.speed });
   };
 
   // ---------- Cần điều khiển (pad) ----------

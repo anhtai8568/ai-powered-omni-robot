@@ -39,7 +39,6 @@ CAMERA_INDEX = int(os.environ.get("CAMERA_INDEX", "0"))
 CONTROL_HZ = 20       # tần số vòng điều khiển gửi lệnh ra robot
 CMD_TIMEOUT = 0.4     # giây; quá thời gian này không có lệnh mới -> dừng robot
 JPEG_QUALITY = 70
-GESTURE_SPEED = 0.5   # tốc độ khi điều khiển bằng cử chỉ (0..1)
 MAX_ACCEL = 2.0       # tăng tốc tối đa, đơn vị lệnh/giây (0 -> 1 mất 0.5 s)
 MAX_DECEL = 4.0       # giảm tốc tối đa (1 -> 0 mất 0.25 s), nhanh hơn tăng tốc để dừng kịp
 
@@ -78,6 +77,7 @@ class State:
         self.estop = False
         self.manual_cmd = (0.0, 0.0, 0.0)
         self.manual_ts = 0.0
+        self.speed = 0.5                     # tốc độ tối đa (0.1..1), chỉnh bằng thanh trên dashboard
         self.gesture = None                  # tên cử chỉ đã lọc nhiễu
         self.gesture_cmd = (0.0, 0.0, 0.0)
         self.gesture_ts = 0.0
@@ -145,7 +145,7 @@ def process_frame(frame):
     """
     pts = tracker.detect(frame)
     state.gesture = gesture_filter.update(classify(pts))
-    state.gesture_cmd = to_command(state.gesture, GESTURE_SPEED)
+    state.gesture_cmd = to_command(state.gesture, state.speed)
     state.gesture_ts = time.time()
     return draw(frame, pts, state.gesture)
 
@@ -168,6 +168,7 @@ def status_msg() -> dict:
         "rtt": round(robot.rtt_ms, 1) if robot.connected else None,
         "mode": state.mode,
         "estop": state.estop,
+        "speed": state.speed,
         "fps": round(state.fps, 1),
     }
 
@@ -291,6 +292,14 @@ async def handle_dashboard_message(d: dict):
     elif kind == "estop":
         state.estop = bool(d.get("on"))
         await broadcast_status()
+    elif kind == "speed":
+        try:
+            v = float(d.get("value"))
+        except (TypeError, ValueError):
+            return  # giá trị rác: giữ nguyên tốc độ cũ (không để thành 0)
+        if v == v:  # bỏ NaN
+            state.speed = max(0.1, min(1.0, v))
+            await broadcast_status()
     elif kind == "mode" and d.get("mode") in ("manual", "gesture"):
         state.mode = d["mode"]
         await broadcast_status()

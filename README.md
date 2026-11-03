@@ -7,23 +7,27 @@ Camera ──► AI cử chỉ ──► Server ──WiFi──► ESP32 ──
                            └──► Dashboard web
 ```
 
-**Đã xong:** stream camera 30 FPS, nhận diện cử chỉ, dashboard điều khiển.
-**Đang làm:** firmware ESP32 (PlatformIO): motor, encoder, PID, nhận lệnh qua WiFi.
+**Đã xong:** stream camera 30 FPS, nhận diện cử chỉ, dashboard, truyền lệnh laptop -> ESP32 qua WiFi.
+**Đang làm:** firmware ESP32: motor, encoder, PID.
 
 ## Chạy
 
 ```bash
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-python web/server.py            # mở http://127.0.0.1:8000/
 ```
+
+1. Nạp firmware (lần đầu): `cd firmware && pio run -t upload`
+2. Bật robot, laptop bắt WiFi **omni-robot** (mật khẩu `omnirobot`). Không cần Internet.
+3. `python web/server.py`, mở http://127.0.0.1:8000/. Ô "Robot" xanh là đã kết nối.
 
 Tùy chọn: `CAMERA_INDEX=1` chọn camera khác, `HOST=0.0.0.0` cho máy khác trong mạng truy cập.
 
-Công cụ thử riêng từng phần (bấm `q` để thoát):
+Công cụ thử riêng từng phần (thoát bằng `q` hoặc Ctrl+C):
 
 ```bash
 python ai/gesture_recognition.py   # xem AI nhận diện tay
+python communication/robot_link.py # gửi lệnh thử tới ESP32 khi không chạy server
 python tests/camera_fps_test.py    # đo FPS camera (tắt server trước)
 ```
 
@@ -40,6 +44,10 @@ Bật bằng nút **Cử chỉ tay** trên dashboard. Ảnh đã lật gương: 
 Chống giật: cử chỉ phải giữ ổn định khoảng 0.15 s mới có hiệu lực, tốc độ tăng giảm dần. Nút **Dừng khẩn cấp** (phím Space) luôn dừng ngay.
 
 Lệnh gửi robot theo chuẩn ROS, mỗi giá trị trong `-1..1`: `vx > 0` tiến, `vy > 0` sang trái, `w > 0` xoay trái.
+
+## Kết nối laptop - ESP32
+
+ESP32 tự phát WiFi, laptop gửi lệnh qua UDP (cổng 4210) 20 lần/giây, độ trễ khoảng 5 ms. ESP32 tự dừng nếu mất lệnh quá 0.3 s, và chỉ nhận lệnh từ một máy tại một thời điểm.
 
 ## Phần cứng
 
@@ -62,5 +70,7 @@ GPIO 34, 35, 36, 39 không có điện trở kéo lên trong: encoder open-colle
 |---|---|
 | `ai/` | đọc camera, nhận diện cử chỉ, chuyển cử chỉ thành lệnh |
 | `web/` | server FastAPI và giao diện dashboard |
+| `communication/` | gửi lệnh tới ESP32 qua UDP |
+| `firmware/` | chương trình ESP32 (PlatformIO) |
 | `tests/` | đo FPS camera |
 | `docs/` | sơ đồ chân |

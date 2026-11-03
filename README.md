@@ -2,6 +2,25 @@
 
 Robot omni 4 bánh (bánh chéo 45°) điều khiển bằng cử chỉ tay qua camera laptop.
 
+## Phiên bản 1 (`v1.0`): nhận diện ngón tay để điều khiển robot omni
+
+Camera laptop -> MediaPipe (21 điểm bàn tay) -> phân loại cử chỉ bằng luật hình học -> lọc nhiễu,
+giới hạn gia tốc -> UDP qua WiFi do ESP32 phát -> động học omni -> PID 4 bánh (encoder 8112 xung/vòng).
+
+Kết quả đo trên robot thật (sàn nhà, tốc độ 22-88%):
+
+| Hạng mục | Kết quả |
+|---|---|
+| Camera / AI | 30 khung/giây, nhận diện tay 18 ms/khung (CPU) |
+| Cử chỉ | 8 hướng chỉ + xoay + dừng; 7 lần chập chờn / 120 lần đổi cử chỉ |
+| Độ trễ cử chỉ được chốt -> bánh đạt 50% tốc độ | trung vị 260 ms (204-359 ms) |
+| WiFi laptop - ESP32 | trễ khứ hồi trung vị 8 ms, 95% dưới 26 ms |
+| Bám tốc độ từng bánh (PID) | sai số trung bình 1.5-3% tốc độ tối đa |
+| Chuyển động robot so với lệnh (từ encoder) | lệch 0.5-2.5%, xoay ngoài ý muốn khi đi thẳng < 0.003 |
+
+Dữ liệu gốc: `docs/data/v1/` (log chạy thủ công và bằng cử chỉ). Tính lại các số trên:
+`python tests/analyze_drive_log.py docs/data/v1/drive_gesture.csv`. Quay lại bản này: `git checkout v1.0`.
+
 
 ## Cài đặt
 
@@ -73,4 +92,5 @@ ESP32 DevKit V1, 2 driver L298N, 4 motor GM25-370 (1:78, encoder 8112 xung/vòng
 | `web/` | server và dashboard |
 | `communication/` | gửi lệnh tới ESP32 qua UDP |
 | `firmware/` | ESP32: WiFi, động học omni, PID |
-| `tests/` | đo FPS camera |
+| `tests/` | đo FPS camera, phân tích log chạy thật |
+| `docs/` | sơ đồ chân, dữ liệu đo bản 1 |

@@ -22,10 +22,11 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 BASE = Path(__file__).parent
-sys.path.insert(0, str(BASE.parent))  # để import được ai/camera.py
+sys.path.insert(0, str(BASE.parent))  # để import được ai/ và communication/
 from ai.camera import Camera  # noqa: E402
 from ai.gesture_recognition import HandTracker, classify, draw  # noqa: E402
 from ai.gesture_to_command import GestureFilter, to_command  # noqa: E402
+from communication.robot_link import RobotLink  # noqa: E402
 
 STATIC = BASE / "static"
 
@@ -89,27 +90,7 @@ tracker = HandTracker()
 gesture_filter = GestureFilter(hold=4, stop_hold=6)  # số khung cần giữ: di chuyển / dừng
 
 
-class RobotLink:
-    """Cầu nối tới ESP32. Hiện chỉ là bản giả (in ra console).
-
-    TODO: gửi lệnh qua WiFi (UDP hoặc WebSocket) tới ESP32, rồi chuyển
-    class này sang thư mục communication/.
-    """
-
-    connected = False
-
-    def __init__(self):
-        self._last_log = 0.0
-
-    async def send(self, cmd: dict):
-        now = time.time()
-        moving = any(cmd[k] for k in ("vx", "vy", "w"))
-        if moving and now - self._last_log > 0.5:
-            print(f"[robot] vx={cmd['vx']:.2f} vy={cmd['vy']:.2f} w={cmd['w']:.2f}")
-            self._last_log = now
-
-
-robot = RobotLink()
+robot = RobotLink()  # gửi lệnh tới ESP32 qua UDP (communication/robot_link.py)
 
 
 def process_frame(frame):
@@ -141,6 +122,7 @@ def status_msg() -> dict:
         "type": "status",
         "camera": cam.opened,
         "robot": robot.connected,
+        "rtt": round(robot.rtt_ms, 1) if robot.connected else None,
         "mode": state.mode,
         "estop": state.estop,
         "fps": round(state.fps, 1),
@@ -225,12 +207,14 @@ async def control_loop():
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     cam.start()
+    await robot.start()
     tasks = [asyncio.create_task(control_loop()), asyncio.create_task(video_loop())]
     yield
     for t in tasks:
         t.cancel()
     cam.stop()
     tracker.close()
+    robot.close()
 
 
 app = FastAPI(lifespan=lifespan)

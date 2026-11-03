@@ -77,7 +77,7 @@
   function onStatus(s) {
     ui.camera = s.camera;
     setStatus('st-camera', s.camera ? 'Camera' : 'Camera: chưa mở được', s.camera);
-    setStatus('st-robot', s.robot ? 'Robot' : 'Robot: chưa kết nối', s.robot);
+    setStatus('st-robot', s.robot ? `Robot ${s.rtt} ms` : 'Robot: chưa kết nối', s.robot);
     setStatus('st-fps', `${s.fps} khung/giây`, s.fps > 0);
     setMode(s.mode, false);
     setEstop(s.estop);

@@ -173,6 +173,7 @@
       if (!ui.estop) send({ type: 'estop', on: true }); // Space chỉ để dừng, không mở khóa
       return;
     }
+    if (e.key.startsWith('Arrow')) e.preventDefault(); // không để mũi tên cuộn trang
     input.keys.add(e.key.toLowerCase());
   });
   window.addEventListener('keyup', (e) => input.keys.delete(e.key.toLowerCase()));
@@ -181,8 +182,9 @@
   // ---------- Tính lệnh thủ công và gửi định kỳ ----------
   function current() {
     const k = input.keys;
-    const fwd = input.pad.y + (k.has('w') ? 1 : 0) - (k.has('s') ? 1 : 0);
-    const left = -input.pad.x + (k.has('a') ? 1 : 0) - (k.has('d') ? 1 : 0);
+    const on = (...keys) => (keys.some((key) => k.has(key)) ? 1 : 0);
+    const fwd = input.pad.y + on('w', 'arrowup') - on('s', 'arrowdown');
+    const left = -input.pad.x + on('a', 'arrowleft') - on('d', 'arrowright');
     const turn = input.rot + (k.has('q') ? 1 : 0) - (k.has('e') ? 1 : 0);
     const c = (v) => Math.max(-1, Math.min(1, v)) * ui.speed;
     return { vx: c(fwd), vy: c(left), w: c(turn) };

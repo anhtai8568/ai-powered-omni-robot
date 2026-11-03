@@ -7,6 +7,7 @@ Biến môi trường: CAMERA_INDEX (mặc định 0), HOST (0.0.0.0 để máy 
 Lệnh (vx, vy, w) theo chuẩn ROS, trong -1..1: vx > 0 tiến, vy > 0 sang trái, w > 0 xoay trái.
 """
 import asyncio
+import csv
 import json
 import os
 import socket
@@ -29,6 +30,7 @@ from ai.gesture_to_command import GestureFilter, to_command  # noqa: E402
 from communication.robot_link import RobotLink  # noqa: E402
 
 STATIC = BASE / "static"
+LOGS = BASE.parent / "logs"
 
 HOST = os.environ.get("HOST", "127.0.0.1")
 PORT = int(os.environ.get("PORT", "8000"))
@@ -91,6 +93,47 @@ gesture_filter = GestureFilter(hold=4, stop_hold=6)  # số khung cần giữ: d
 
 
 robot = RobotLink()  # gửi lệnh tới ESP32 qua UDP (communication/robot_link.py)
+
+
+class DriveLog:
+    """Ghi mỗi tick điều khiển 1 dòng vào logs/drive_<ngày giờ>.csv, chỉ khi robot đang kết nối.
+
+    Mỗi dòng: thời gian, chế độ, cử chỉ, lệnh gửi robot, độ trễ, và số liệu 4 bánh ESP32 gửi về
+    (tốc độ muốn, tốc độ đo, PWM; đơn vị chuẩn hóa, 1.0 = tốc độ tối đa).
+    """
+
+    WHEELS = ("tt", "tp", "st", "sp")  # trước trái, trước phải, sau trái, sau phải
+
+    def __init__(self):
+        self._file = None
+        self._writer = None
+
+    def write(self):
+        if not robot.connected or robot.wheels is None:
+            return
+        if self._file is None:
+            LOGS.mkdir(exist_ok=True)
+            path = LOGS / time.strftime("drive_%Y%m%d_%H%M%S.csv")
+            self._file = open(path, "w", newline="")
+            self._writer = csv.writer(self._file)
+            self._writer.writerow(["t", "mode", "estop", "gesture", "vx", "vy", "w", "rtt_ms"]
+                                  + [f"{w}_{k}" for w in self.WHEELS for k in ("muon", "do", "pwm")])
+            print(f"Ghi log: {path}")
+        o = state.out
+        self._writer.writerow([f"{time.time():.3f}", state.mode, int(state.estop), state.gesture or "",
+                               f"{o['vx']:.3f}", f"{o['vy']:.3f}", f"{o['w']:.3f}",
+                               f"{robot.rtt_ms:.1f}"] + robot.wheels)
+
+    def flush(self):
+        if self._file:
+            self._file.flush()
+
+    def close(self):
+        if self._file:
+            self._file.close()
+
+
+drive_log = DriveLog()
 
 
 def process_frame(frame):
@@ -190,6 +233,7 @@ async def control_loop():
             state.out = {k: ramp(state.out[k], v, period)
                          for k, v in (("vx", vx), ("vy", vy), ("w", w))}
         await robot.send(state.out)
+        drive_log.write()
         # Lệnh thật gửi cho robot + cử chỉ, mỗi tick (20 lần/giây) để web hiển thị tức thì
         await broadcast_json({"type": "telemetry", "out": state.out, "gesture": state.gesture})
 
@@ -200,6 +244,7 @@ async def control_loop():
             state.frame_count = 0
             fps_t0 = now
             await broadcast_status()
+            drive_log.flush()
 
         await asyncio.sleep(period)
 
@@ -215,6 +260,7 @@ async def lifespan(app: FastAPI):
     cam.stop()
     tracker.close()
     robot.close()
+    drive_log.close()
 
 
 app = FastAPI(lifespan=lifespan)

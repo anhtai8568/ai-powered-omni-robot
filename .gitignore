@@ -34,3 +34,6 @@ ai/models/
 
 # PlatformIO
 firmware/.pio/
+
+# Log chạy robot
+logs/

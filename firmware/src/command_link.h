@@ -3,7 +3,8 @@
 // ESP32 tự phát WiFi (SoftAP), laptop bắt vào, không cần mạng bên ngoài.
 // Giao thức UDP, gói tin dạng chữ để dễ đọc khi gỡ lỗi:
 //   laptop -> ESP32:  "C <seq> <vx> <vy> <w>"   vd "C 12 0.500 -0.200 0.100"
-//   ESP32 -> laptop:  "A <seq>"                  để laptop biết robot còn sống và đo độ trễ
+//   ESP32 -> laptop:  "A <seq> <số liệu bánh>"   để laptop biết robot còn sống, đo độ trễ,
+//                                                và ghi log (xem set_telemetry)
 // Dùng UDP thay vì TCP: chỉ lệnh mới nhất có giá trị, mất gói thì gói sau 50 ms thay thế,
 // không phải chờ gửi lại như TCP.
 //
@@ -53,7 +54,7 @@ class CommandLink {
         packets_++;
         got = true;
         udp_.beginPacket(ip, port);
-        udp_.printf("A %lu", seq);
+        udp_.printf("A %lu %s", seq, telemetry_);
         udp_.endPacket();
       }
     }
@@ -65,6 +66,9 @@ class CommandLink {
 
   // Lệnh hiện tại; trả về 0 hết nếu đã mất liên lạc (an toàn).
   Command command() const { return alive() ? cmd_ : Command{}; }
+
+  // Chuỗi số liệu gửi kèm mỗi gói trả lời (vd tốc độ 4 bánh), main cập nhật mỗi vòng điều khiển
+  void set_telemetry(const char* text) { strlcpy(telemetry_, text, sizeof(telemetry_)); }
 
   uint32_t packets() const { return packets_; }
   int clients() const { return WiFi.softAPgetStationNum(); }
@@ -80,4 +84,5 @@ class CommandLink {
   uint16_t owner_port_ = 0;
   uint32_t last_ms_ = 0;
   uint32_t packets_ = 0;
+  char telemetry_[128] = "";
 };

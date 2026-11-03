@@ -31,3 +31,6 @@ dist/
 Thumbs.db
 # Model AI (tự tải về khi chạy lần đầu)
 ai/models/
+
+# PlatformIO
+firmware/.pio/

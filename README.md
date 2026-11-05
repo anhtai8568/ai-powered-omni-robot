@@ -2,6 +2,10 @@
 
 Robot omni 4 bánh (bánh chéo 45°) điều khiển bằng cử chỉ tay qua camera laptop.
 
+**Bản 2 (nhánh `v2`, đang làm):** điều khiển toàn bộ bằng hai tay. Tay không thuận lái robot như bản 1.
+Tay thuận điều khiển giao diện: di con trỏ, click, kéo thanh trượt và cần lái, xem thông số, đổi chế độ,
+mở cài đặt, ẩn hình camera. Hướng nghiên cứu tiếp theo: `reports/`.
+
 ## Phiên bản 1 (`v1.0`): nhận diện ngón tay để điều khiển robot omni
 
 Camera laptop -> MediaPipe (21 điểm bàn tay) -> phân loại cử chỉ bằng luật hình học -> lọc nhiễu,
@@ -47,7 +51,13 @@ python web/server.py                                       # mở http://127.0.0
 
 ## Cử chỉ
 
-Bật bằng nút **Cử chỉ tay**. Ảnh đã lật gương: "trái" là bên trái của bạn.
+Ảnh đã lật gương: "trái" là bên trái của bạn. Hai tay độc lập, dùng cùng lúc được. Mặc định tay phải
+điều khiển giao diện, tay trái lái robot (đổi trong Cài đặt).
+
+Chế độ **Thủ công** chỉ cần một tay: tay nào đang thấy cũng điều khiển giao diện, kể cả kéo cần lái.
+Chế độ **Cử chỉ tay** mới chia vai theo bên.
+
+**Tay không thuận: lái robot** (bật bằng nút **Cử chỉ tay**)
 
 | Cử chỉ | Robot |
 |---|---|
@@ -55,7 +65,19 @@ Bật bằng nút **Cử chỉ tay**. Ảnh đã lật gương: "trái" là bên
 | Chữ V chỉ trái / phải | Xoay trái / phải |
 | Nắm tay, xòe tay, không thấy tay | Dừng |
 
+**Tay thuận: giao diện**
+
+| Cử chỉ | Tác dụng |
+|---|---|
+| Chỉ ngón trỏ | Di con trỏ |
+| Giữ yên con trỏ trên nút (0.8 s, vòng tròn đầy dần) | Click |
+| Giữ yên trên thanh trượt | Nắm thanh (viền xanh, giá trị không nhảy). Di ngón tay thì giá trị tăng giảm theo; dừng yên để nhả |
+| Duỗi thêm ngón giữa | Bấm nhanh; giữ rồi di chuyển là kéo thanh trượt (cũng tương đối) hoặc cần lái |
+| Rê lâu (0.5 s) lên nút hoặc chip trạng thái | Hiện thẻ thông số |
+| Tư thế khác (xòe, nắm...) | Con trỏ ẩn, không bấm nhầm |
+
 Nút **Dừng khẩn cấp** (phím Space) luôn dừng ngay. ESP32 tự dừng nếu mất lệnh quá 0.3 s.
+Giơ tay trước camera 2 giây khi chưa mở dashboard thì trình duyệt tự mở (tắt: `HAND_OPEN=0`).
 
 ## Công cụ kiểm tra
 
@@ -66,7 +88,8 @@ Kê robot lên (bánh không chạm đất) trước khi chạy motor.
 | `pio run -e motor_test -t upload -t monitor` | Gõ `1`-`4` chạy từng bánh, `t` đo tốc độ tối đa và vùng chết |
 | `pio run -t upload -t monitor` | Firmware chính. Gõ `s` chạy kịch bản thử, `g kp ki ff` đổi hệ số PID |
 | `pio device monitor` | Chỉ xem Serial, không nạp lại |
-| `python ai/gesture_recognition.py` | Xem AI nhận diện tay |
+| `python ai/demo.py` | Xem AI nhận hai tay, vai trò và con trỏ (`left` nếu thuận tay trái) |
+| `python tests/test_hands_logic.py` | Kiểm tra logic tay bằng bàn tay giả, không cần camera |
 | `python communication/robot_link.py` | Gửi lệnh thử tới ESP32 (khi không chạy server) |
 
 Lệnh `pio` chạy trong thư mục `firmware/`. Thoát bằng Ctrl+C.
@@ -88,7 +111,7 @@ ESP32 DevKit V1, 2 driver L298N, 4 motor GM25-370 (1:78, encoder 8112 xung/vòng
 
 | | |
 |---|---|
-| `ai/` | camera, nhận diện cử chỉ |
+| `ai/` | `camera.py`, `hands.py` (2 tay, vai trò), `drive/` (cử chỉ lái), `ui/` (con trỏ) |
 | `web/` | server và dashboard |
 | `communication/` | gửi lệnh tới ESP32 qua UDP |
 | `firmware/` | ESP32: WiFi, động học omni, PID |

@@ -1,0 +1,214 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Kiểm tra handcursor.js</title>
+<!--
+  Kiểm tra logic con trỏ trong trình duyệt (giữ yên để click, bấm ngón giữa, kéo thanh, cần lái, thẻ thông số).
+  Đồng hồ được giả lập nên không phải chờ thật. Chạy:
+    firefox --headless --window-size=1300,800 --screenshot ket_qua.png file://$PWD/tests/handcursor_test.html
+  rồi xem ảnh: dòng PASS / FAIL hiện ở cột bên phải.
+-->
+<style>
+  body { margin: 0; font: 14px sans-serif; }
+  .box { position: absolute; border: 1px solid #444; background: #ddd; }
+  #pad { border-radius: 50%; }
+  pre { position: absolute; left: 520px; top: 0; margin: 0; font: 13px/1.35 monospace; }
+  .hand-hover { outline: 2px solid #c00; }
+</style>
+<button id="b1" class="box" data-hand="button" style="left:100px;top:100px;width:120px;height:40px">Nút 1</button>
+<button id="b2" class="box" data-hand="button" style="left:300px;top:100px;width:120px;height:40px">Nút 2</button>
+<input id="sl" data-hand="slider" type="range" min="10" max="100" value="50" style="position:absolute;left:100px;top:200px;width:400px;margin:0;padding:0">
+<div id="pad" class="box" data-hand="pad" style="left:100px;top:300px;width:120px;height:120px"></div>
+<button id="hold" class="box" data-hand="hold" style="left:300px;top:340px;width:120px;height:40px">Giữ</button>
+<div id="plain" class="box" style="left:100px;top:460px;width:120px;height:40px">Không data-hand</div>
+<pre id="out"></pre>
+<script src="../web/static/handcursor.js"></script>
+<script>
+  const H = window.HandCursor;
+  const lines = [];
+  let failed = 0;
+  const ok = (name, cond) => { lines.push((cond ? 'PASS ' : 'FAIL ') + name); if (!cond) failed++; };
+
+  const count = { b1: 0, b2: 0, input: 0 };
+  const calls = { padPoint: [], padRelease: 0, holdStart: [], holdEnd: [] };
+  $ = (id) => document.getElementById(id);
+  $('b1').onclick = () => count.b1++;
+  $('b2').onclick = () => count.b2++;
+  $('sl').addEventListener('input', () => count.input++);
+  H.hooks.padPoint = (x, y) => calls.padPoint.push([x, y]);
+  H.hooks.padRelease = () => calls.padRelease++;
+  H.hooks.holdStart = (id) => calls.holdStart.push(id);
+  H.hooks.holdEnd = (id) => calls.holdEnd.push(id);
+  H.hooks.info = (el) => 'thông số ' + el.id;
+
+  let clock = 0;
+  const step = (pose, x, y, ms = 33) => { clock += ms; H.update({ pose, x: x / innerWidth, y: y / innerHeight }, clock); };
+  const hold = (pose, x, y, total) => { for (let t = 0; t < total; t += 33) step(pose, x, y); };
+  const reset = () => { hold('none', 0, 0, 100); clock += 1000; };
+  const cursor = () => document.querySelector('.hand-cursor');
+  const info = () => document.querySelector('.info-card');
+
+  // 1. Giữ yên để click
+  hold('point', 160, 120, 500);
+  ok('giữ yên 0.5 s: chưa click', count.b1 === 0);
+  hold('point', 160, 120, 400);
+  ok('giữ yên 0.9 s: click đúng 1 lần', count.b1 === 1);
+  hold('point', 160, 120, 2000);
+  ok('vẫn giữ yên thêm 2 s: không click lặp', count.b1 === 1);
+  hold('point', 200, 120, 900);   // dịch 40 px (> 30 px) nhưng vẫn trong nút
+  ok('dịch ra khỏi vùng rồi giữ yên: click lần 2', count.b1 === 2);
+  reset();
+
+  // 2. Tư thế idle: không bấm được, con trỏ ẩn
+  hold('idle', 160, 120, 2000);
+  ok('idle 2 s trên nút: không click', count.b1 === 2);
+  ok('idle: con trỏ ẩn', cursor().hidden === true);
+  hold('point', 160, 120, 100);
+  ok('point: con trỏ hiện', cursor().hidden === false);
+  reset();
+
+  // 3. Phần tử không có data-hand: giữ yên không làm gì
+  hold('point', 160, 480, 2000);
+  ok('giữ yên trên vùng không data-hand: không click gì', count.b1 === 2 && count.b2 === 0);
+  reset();
+
+  // 4. Bấm bằng ngón giữa (pose click)
+  hold('click', 360, 120, 500);
+  ok('bấm 0.5 s: đúng 1 click (không lặp khi giữ)', count.b2 === 1);
+  hold('point', 360, 120, 100);
+  hold('click', 360, 120, 300);
+  ok('nhả rồi bấm lại: click lần 2', count.b2 === 2);
+  reset();
+
+  // 5. Thanh trượt: kéo TƯƠNG ĐỐI, nắm thanh thì giá trị không nhảy tới chỗ ngón tay
+  const move = (pose, x0, x1, y, ms) => { for (let t = 0; t < ms; t += 33) step(pose, x0 + (x1 - x0) * Math.min(1, t / ms), y); };
+  const sl = $('sl');
+  sl.value = 50;
+  const before = count.input;
+  hold('click', 200, 212, 200);            // bấm ở 25% chiều dài thanh, còn giá trị đang là 50
+  ok(`bấm vào thanh: giá trị KHÔNG nhảy tới chỗ bấm (vẫn ${sl.value})`, Number(sl.value) === 50);
+  ok('bấm vào thanh: thanh được nắm (có viền xanh)', sl.classList.contains('hand-grab'));
+  move('click', 200, 400, 212, 300);       // ngón tay đi 200 px = một nửa thang (90): +45
+  hold('click', 400, 212, 100);
+  const v2 = Number(sl.value);
+  ok(`ngón tay sang phải 200 px: giá trị tăng +45 (${v2}, mong đợi 94-96)`, v2 >= 94 && v2 <= 96);
+  move('click', 400, 300, 600, 200);       // ra xa theo chiều dọc, đi lại 100 px về trái so với chỗ bấm: +22.5
+  hold('click', 300, 600, 100);
+  const v3 = Number(sl.value);
+  ok(`kéo ra ngoài thanh theo chiều dọc vẫn bám: giá trị ${v3} (mong đợi 72-73)`, v3 >= 72 && v3 <= 73);
+  ok('thanh phát sự kiện input khi kéo', count.input - before >= 3);
+  hold('point', 300, 600, 100);
+  ok('nhả ngón giữa: thanh hết được nắm', !sl.classList.contains('hand-grab'));
+  const kept = Number(sl.value);
+  move('point', 300, 100, 212, 300);
+  ok('nhả rồi: di chuyển tiếp không làm đổi giá trị', Number(sl.value) === kept);
+  reset();
+
+  // 5b. Giữ yên để nắm thanh, di ngón tay thì giá trị đổi theo, dừng yên thì nhả
+  sl.value = 50;
+  hold('point', 440, 212, 900);
+  ok(`giữ yên trên thanh: nắm thanh, giá trị KHÔNG nhảy (vẫn ${sl.value})`, Number(sl.value) === 50 && sl.classList.contains('hand-grab'));
+  move('point', 440, 340, 212, 400);       // ngón tay sang trái 100 px: -22.5
+  hold('point', 340, 212, 200);
+  const w1 = Number(sl.value);
+  ok(`di ngón tay sang trái 100 px: giá trị giảm (${w1}, mong đợi 27-28)`, w1 >= 27 && w1 <= 28);
+  ok('vẫn đang nắm khi ngón tay còn đang đi', sl.classList.contains('hand-grab'));
+  move('point', 340, 420, 212, 400);       // quay lại sang phải 80 px: +18
+  hold('point', 420, 212, 200);
+  const w2 = Number(sl.value);
+  ok(`đổi chiều: giá trị tăng lại (${w2}, mong đợi 45-46)`, w2 >= 45 && w2 <= 46);
+  hold('point', 420, 212, 1000);           // dừng yên hơn 0.8 s: nhả
+  ok('dừng yên sau khi di chuyển: nhả thanh', !sl.classList.contains('hand-grab'));
+  const w3 = Number(sl.value);
+  move('point', 420, 150, 212, 300);
+  ok('đã nhả: di chuyển tiếp không đổi giá trị', Number(sl.value) === w3);
+  reset();
+
+  // 5c. Nắm bằng giữ yên rồi hạ tay (idle) thì nhả; nắm xong không di chuyển thì tự nhả sau 3 s
+  sl.value = 50;
+  hold('point', 300, 212, 900);
+  ok('nắm thanh lần nữa', sl.classList.contains('hand-grab'));
+  hold('idle', 300, 212, 100);
+  ok('hạ tay (idle): nhả thanh', !sl.classList.contains('hand-grab'));
+  reset();
+  hold('point', 300, 212, 900);
+  hold('point', 300, 212, 2000);
+  ok('nắm mà chưa di chuyển, sau 2 s vẫn đang nắm', sl.classList.contains('hand-grab'));
+  hold('point', 300, 212, 1200);
+  ok('nắm mà không di chuyển lần nào: tự nhả sau 3 s', !sl.classList.contains('hand-grab'));
+  ok('...và giá trị không đổi', Number(sl.value) === 50);
+  reset();
+
+  // 5d. Đang nắm bằng giữ yên, bấm ngón giữa = xác nhận, nhả thanh
+  sl.value = 50;
+  hold('point', 300, 212, 900);
+  move('point', 300, 360, 212, 300);
+  const pv = Number(sl.value);
+  hold('click', 360, 212, 100);
+  ok('bấm ngón giữa khi đang nắm: thanh được nhả/chuyển sang kiểu bấm', Number(sl.value) === pv || sl.classList.contains('hand-grab'));
+  hold('point', 360, 212, 100);
+  ok('nhả ngón giữa: hết nắm', !sl.classList.contains('hand-grab'));
+  reset();
+
+  // 6. Cần lái
+  hold('click', 160, 360, 100);
+  hold('click', 190, 340, 100);
+  ok('cần lái: bấm gọi padPoint', calls.padPoint.length > 0 && calls.padPoint[0][0] === 160);
+  ok('cần lái: kéo gọi padPoint theo vị trí mới', calls.padPoint[calls.padPoint.length - 1][0] === 190);
+  hold('point', 190, 340, 100);
+  ok('cần lái: nhả gọi padRelease đúng 1 lần', calls.padRelease === 1);
+  const n = calls.padPoint.length;
+  hold('point', 160, 360, 1500);
+  ok('cần lái: giữ yên không kích hoạt (dwell bỏ qua cần lái)', calls.padPoint.length === n);
+  reset();
+
+  // 7. Nút giữ (xoay), và mất tay khi đang giữ thì nhả
+  hold('click', 360, 360, 200);
+  ok('nút giữ: bấm gọi holdStart', calls.holdStart.length === 1 && calls.holdStart[0] === 'hold');
+  ok('nút giữ: chưa nhả', calls.holdEnd.length === 0);
+  hold('none', 0, 0, 100);
+  ok('mất tay khi đang giữ: tự nhả (an toàn)', calls.holdEnd.length === 1);
+  hold('point', 360, 360, 1500);
+  ok('nút giữ: giữ yên không kích hoạt', calls.holdStart.length === 1);
+  reset();
+
+  // 8. Thẻ thông số
+  H.cfg.dwellOn = false;
+  hold('point', 160, 120, 300);
+  ok('rê 0.3 s: chưa có thẻ thông số', info().hidden === true);
+  hold('point', 160, 120, 400);
+  ok('rê 0.7 s: hiện thẻ thông số', info().hidden === false && info().textContent === 'thông số b1');
+  hold('point', 160, 480, 600);
+  ok('rê sang vùng không data-hand: thẻ ẩn', info().hidden === true);
+  ok('viền nổi bật khi rê', (hold('point', 360, 120, 100), $('b2').classList.contains('hand-hover')));
+  ok('rời nút: bỏ viền nổi bật', (hold('point', 160, 480, 100), !$('b2').classList.contains('hand-hover')));
+  reset();
+
+  // 8b. Điểm tác động (ax, ay) khác vị trí hiển thị (x, y): chọn nút theo điểm tác động, vẽ con trỏ theo (x, y)
+  {
+    const b2n = count.b2;
+    clock += 33;
+    H.update({ pose: 'click', x: 160 / innerWidth, y: 480 / innerHeight, ax: 360 / innerWidth, ay: 120 / innerHeight }, clock);
+    ok('bấm: nút được chọn theo điểm tác động, không theo vị trí con trỏ', count.b2 === b2n + 1);
+    ok('con trỏ vẽ ở (x, y) chứ không ở điểm tác động', cursor().style.transform.includes('140px, 460px'));
+    reset();
+  }
+
+  // 9. Cài đặt
+  const b2 = count.b2;
+  hold('point', 360, 120, 2500);
+  ok('tắt giữ yên: không click dù giữ 2.5 s', count.b2 === b2);
+  H.cfg.dwellOn = true;
+  H.cfg.twoFinger = false;
+  hold('click', 360, 120, 300);
+  ok('tắt click ngón giữa: pose click không bấm ngay', count.b2 === b2);
+  hold('click', 360, 120, 700);
+  ok('tắt click ngón giữa: pose click hoạt động như trỏ (giữ yên vẫn click)', count.b2 === b2 + 1);
+  H.cfg.twoFinger = true;
+  reset();
+  H.cfg.dwellMs = 400;
+  hold('point', 160, 120, 600);
+  ok('đổi thời gian giữ yên còn 0.4 s: click sau 0.6 s', count.b1 === 3);
+
+  document.getElementById('out').textContent =
+    lines.join('\n') + '\n\n' + (failed === 0 ? 'TẤT CẢ ĐỀU ĐẠT' : failed + ' BÀI KHÔNG ĐẠT');
+</script>

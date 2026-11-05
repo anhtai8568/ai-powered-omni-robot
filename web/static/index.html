@@ -10,23 +10,31 @@
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body data-mode="manual">
+  <!-- Hình camera phủ cả cửa sổ, nằm ngoài .screen để không bị lớp xếp chồng của .screen che mặt nạ -->
+  <canvas id="view" width="640" height="480" aria-label="Hình từ camera laptop"></canvas>
+
   <header class="top">
     <h1>Robot omni</h1>
     <ul class="status" aria-label="Trạng thái kết nối">
-      <li id="st-link" data-ok="false">Máy chủ</li>
-      <li id="st-camera" data-ok="false">Camera</li>
-      <li id="st-robot" data-ok="false">Robot</li>
-      <li id="st-fps" data-ok="false">0 khung/giây</li>
+      <li id="st-link" data-hand="info" data-ok="false">Máy chủ</li>
+      <li id="st-camera" data-hand="info" data-ok="false">Camera</li>
+      <li id="st-robot" data-hand="info" data-ok="false">Robot</li>
+      <li id="st-fps" data-hand="info" data-ok="false">0 khung/giây</li>
+      <li id="st-hand-ui" data-hand="info" data-ok="false">Tay giao diện</li>
+      <li id="st-hand-drive" data-hand="info" data-ok="false">Tay lái</li>
     </ul>
     <div class="mode" role="group" aria-label="Chế độ điều khiển">
-      <button id="mode-manual" aria-pressed="true">Thủ công</button>
-      <button id="mode-gesture" aria-pressed="false">Cử chỉ tay</button>
+      <button id="mode-manual" data-hand="button" aria-pressed="true">Thủ công</button>
+      <button id="mode-gesture" data-hand="button" aria-pressed="false">Cử chỉ tay</button>
+    </div>
+    <div class="tools" role="group" aria-label="Công cụ">
+      <button id="toggle-video" data-hand="button" aria-pressed="false">Ẩn hình</button>
+      <button id="open-settings" data-hand="button" aria-pressed="false">Cài đặt</button>
     </div>
   </header>
 
   <main class="console">
     <section class="screen">
-      <canvas id="view" width="640" height="480" aria-label="Hình từ camera laptop"></canvas>
       <p id="hint" class="hint"></p>
     </section>
 
@@ -61,12 +69,12 @@
 
       <div class="input">
         <div class="drive manual-only">
-          <div id="pad" class="pad" aria-label="Cần điều khiển: kéo lên để tiến, sang ngang để đi ngang">
+          <div id="pad" class="pad" data-hand="pad" aria-label="Cần điều khiển: kéo lên để tiến, sang ngang để đi ngang">
             <div id="knob" class="knob"></div>
           </div>
           <div class="rot">
-            <button id="rot-l">Xoay trái</button>
-            <button id="rot-r">Xoay phải</button>
+            <button id="rot-l" data-hand="hold">Xoay trái</button>
+            <button id="rot-r" data-hand="hold">Xoay phải</button>
           </div>
         </div>
 
@@ -83,16 +91,50 @@
 
         <label class="speed">
           <span>Tốc độ</span>
-          <input id="speed" type="range" min="10" max="100" value="50">
+          <input id="speed" data-hand="slider" type="range" min="10" max="100" value="50">
           <output id="speed-out">50%</output>
         </label>
       </div>
 
-      <button id="estop" class="estop" aria-pressed="false">Dừng khẩn cấp</button>
+      <button id="estop" class="estop" data-hand="button" aria-pressed="false">Dừng khẩn cấp</button>
       <p class="keys manual-only">Mũi tên hoặc W A S D để đi, Q E xoay, Space dừng</p>
     </aside>
   </main>
 
+  <div id="settings" class="overlay" hidden>
+    <section class="dialog" role="dialog" aria-label="Cài đặt">
+      <h2>Cài đặt</h2>
+      <div class="row">
+        <span>Tay thuận (điều khiển giao diện)</span>
+        <div class="pair">
+          <button id="dom-right" data-hand="button" aria-pressed="true">Phải</button>
+          <button id="dom-left" data-hand="button" aria-pressed="false">Trái</button>
+        </div>
+      </div>
+      <div class="row">
+        <span>Click bằng giữ yên con trỏ</span>
+        <button id="opt-dwell" class="toggle" data-hand="button" aria-pressed="true">Bật</button>
+      </div>
+      <label class="row">
+        <span>Thời gian giữ yên</span>
+        <input id="dwell-ms" data-hand="slider" type="range" min="400" max="1500" step="100" value="800">
+        <output id="dwell-out">0.8 s</output>
+      </label>
+      <div class="row">
+        <span>Click bằng ngón giữa</span>
+        <button id="opt-two" class="toggle" data-hand="button" aria-pressed="true">Bật</button>
+      </div>
+      <label class="row">
+        <span>Vùng tay hoạt động</span>
+        <input id="region" data-hand="slider" type="range" min="40" max="100" step="5" value="100">
+        <output id="region-out">100%</output>
+      </label>
+      <p class="note">100%: con trỏ nằm đúng đầu ngón tay trên hình. Nhỏ hơn thì tay đi ít hơn, nhưng con trỏ không còn trùng đầu ngón tay.</p>
+      <button id="settings-close" class="close" data-hand="button">Đóng</button>
+    </section>
+  </div>
+
+  <script src="/static/handcursor.js"></script>
   <script src="/static/dashboard.js"></script>
 </body>
 </html>

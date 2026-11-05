@@ -90,7 +90,8 @@ button {
   background: var(--go);
 }
 
-.mode {
+.mode,
+.pair {
   display: flex;
   padding: 3px;
   background: var(--panel-deep);
@@ -98,7 +99,8 @@ button {
   border-radius: 8px;
 }
 
-.mode button {
+.mode button,
+.pair button {
   padding: 7px 16px;
   background: transparent;
   border: 0;
@@ -106,7 +108,8 @@ button {
   color: var(--muted);
 }
 
-.mode button[aria-pressed="true"] {
+.mode button[aria-pressed="true"],
+.pair button[aria-pressed="true"] {
   background: var(--ink);
   color: var(--panel);
   font-weight: 500;
@@ -120,22 +123,32 @@ button {
   min-height: 0;
 }
 
+/* Hình camera phủ cả cửa sổ trình duyệt (#view), .screen chỉ là ô cửa nhìn ra nó: bóng đổ 800 px
+   cùng màu nền che phần ngoài ô (rìa rộng nhất là cột điều khiển 330 px; bóng quá lớn thì Firefox bỏ qua). Nhờ vậy con trỏ tay nằm đúng đầu ngón tay trên hình ở mọi vị trí
+   trên trang, kể cả trên cột điều khiển. */
 .screen {
   position: relative;
-  display: grid;
+  z-index: 1;
   min-height: 0;
   margin: 14px 0 14px 14px;
-  padding: 10px;
-  background: var(--screen);
   border-radius: 10px;
-  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.5);
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.5), 0 0 0 800px var(--panel);
 }
 
 #view {
-  width: 100%;
-  height: 100%;
-  min-height: 0;
-  object-fit: contain;
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  width: 100vw;
+  height: 100vh;
+  object-fit: cover;
+  background: var(--screen);
+}
+
+.top,
+.panel {
+  position: relative;
+  z-index: 2;
 }
 
 .hint {
@@ -422,6 +435,15 @@ body[data-mode="gesture"] .manual-only {
   .screen {
     aspect-ratio: 4 / 3;
     margin: 12px 16px 0;
+    background: var(--screen);
+    box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.5);
+  }
+
+  #view {
+    position: static;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
   }
 
   .panel {
@@ -434,9 +456,176 @@ body[data-mode="gesture"] .manual-only {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .hand-cursor.flash svg {
+    animation: none;
+  }
+
   .rot button:active,
   .estop:active,
   .estop[aria-pressed="true"] {
     transform: none;
   }
+}
+
+/* ---------- Công cụ trên thanh trên ---------- */
+
+.tools {
+  display: flex;
+  gap: 6px;
+}
+
+.tools button,
+.toggle,
+.close {
+  padding: 7px 14px;
+  background: var(--panel);
+  border: 1px solid var(--edge);
+  border-bottom-width: 3px;
+  border-radius: 6px;
+}
+
+.tools button[aria-pressed="true"],
+.toggle[aria-pressed="true"] {
+  background: var(--ink);
+  border-bottom-width: 1px;
+  color: var(--panel);
+  transform: translateY(2px);
+}
+
+/* ---------- Điều khiển bằng tay thuận ---------- */
+
+/* Thủ công chỉ dùng một tay: không có tay lái */
+body[data-mode="manual"] #st-hand-drive {
+  display: none;
+}
+
+.hand-hover {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+/* Thanh trượt đang được nắm: ngón tay di chuyển thì giá trị tăng giảm theo */
+.hand-grab {
+  outline: 3px solid var(--go);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+.hand-cursor svg {
+  display: block;
+  overflow: visible;
+  filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.9));
+}
+
+.hc-dot {
+  fill: var(--ink);
+  stroke: #fff;
+  stroke-width: 2;
+}
+
+.hc-track {
+  fill: none;
+  stroke: var(--ink);
+  stroke-opacity: 0.35;
+  stroke-width: 3;
+}
+
+.hc-ring {
+  fill: none;
+  stroke: var(--go);
+  stroke-width: 3.5;
+  stroke-linecap: round;
+}
+
+.hand-cursor.pressing .hc-dot {
+  r: 9px;
+}
+
+.hand-cursor.pressing .hc-track {
+  stroke-opacity: 1;
+}
+
+.hand-cursor.flash svg {
+  animation: hc-flash 0.25s ease-out;
+}
+
+@keyframes hc-flash {
+  from { transform: scale(1.6); }
+  to { transform: scale(1); }
+}
+
+.info-card {
+  max-width: 280px;
+  padding: 8px 12px;
+  background: var(--ink);
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  color: var(--panel);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+/* ---------- Bảng cài đặt ---------- */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  display: grid;
+  place-items: center;
+  background: rgba(34, 37, 42, 0.45);
+}
+
+.overlay[hidden] {
+  display: none;
+}
+
+.dialog {
+  display: grid;
+  gap: 12px;
+  width: min(460px, calc(100vw - 32px));
+  padding: 18px 20px;
+  background: var(--panel);
+  border: 1px solid var(--edge);
+  border-radius: 10px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
+}
+
+.dialog h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.row input[type="range"] {
+  width: 150px;
+  margin-left: auto;
+  accent-color: var(--ink);
+}
+
+.row output {
+  min-width: 3.2em;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.toggle {
+  min-width: 70px;
+}
+
+.close {
+  justify-self: end;
+  padding: 9px 24px;
+}
+
+.note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
 }

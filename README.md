@@ -2,9 +2,9 @@
 
 Robot omni 4 bánh (bánh chéo 45°) điều khiển bằng cử chỉ tay qua camera laptop.
 
-**Bản 2 (nhánh `v2`, đang làm):** điều khiển toàn bộ bằng hai tay. Tay không thuận lái robot như bản 1.
+**Bản 2 (nhánh `v2`):** điều khiển toàn bộ bằng hai tay. Tay không thuận lái robot như bản 1.
 Tay thuận điều khiển giao diện: di con trỏ, click, kéo thanh trượt và cần lái, xem thông số, đổi chế độ,
-mở cài đặt, ẩn hình camera. Hướng nghiên cứu tiếp theo: `reports/`.
+mở cài đặt, ẩn hình camera.
 
 ## Phiên bản 1 (`v1.0`): nhận diện ngón tay để điều khiển robot omni
 

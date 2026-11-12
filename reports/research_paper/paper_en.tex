@@ -13,7 +13,11 @@
 \usepackage{array}
 \usepackage{url}
 \usepackage{textcomp}
+\usepackage{placeins}
 
+\setcounter{dbltopnumber}{3}
+\renewcommand{\dbltopfraction}{0.95}
+\renewcommand{\textfraction}{0.05}
 \graphicspath{{../figures/}}
 \renewcommand{\arraystretch}{1.12}
 
@@ -188,11 +192,6 @@ The round-trip time is measured per command from the sequence number of the UDP 
 
 For $38$ ($26$) confirmed motion gestures in the v1 gesture (v2) run, the time from the logged gesture to the moment the most loaded wheel reached $50\,\%$ of its new target was $260\,\mathrm{ms}$ median ($204$--$359\,\mathrm{ms}$) and $257\,\mathrm{ms}$ median ($203$--$309\,\mathrm{ms}$). This includes the deliberate acceleration limits of Section~III-D, so it is not the minimum achievable latency, and it does not include the $4$ frames ($\approx133\,\mathrm{ms}$) needed to confirm a gesture.
 
-\subsection{Wheel Tracking and Body Motion}
-We evaluate wheel tracking only when the command has been constant for $0.3\,\mathrm{s}$ and at least $0.1$ in magnitude. Table~\ref{tab:ff} and Fig.~\ref{fig:wheel} give mean errors of $1.5$--$3.2\,\%$ of full scale over the three runs. The $95$th percentile of the error is higher, $4.4$--$4.8\,\%$ in the v1 gesture run and $6.1$--$7.4\,\%$ in the v2 run, so the $5\,\%$ mark is met by the mean but not by the tail in the latter. The front-right wheel, which has the largest dead zone, needs the highest mean duty ($0.48$--$0.49$ against $0.36$--$0.44$). We did not compare against a plain PID or against open loop on the same trajectories, so the benefit of the proposed controller over those is not quantified here.
-
-Table~\ref{tab:odo} compares the commanded and the encoder-derived body velocity from (\ref{eq:fk}) over segments with a constant primitive. The error in the main axis is below $0.6\,\%$ for translations and about $2.4$--$2.5\,\%$ for rotations, and the unintended motion in the other axes stays at or below $0.004$. These are velocities from the wheel encoders and do not include wheel slip on the floor, so they are not ground-truth position errors.
-
 \begin{table*}[!t]
 \caption{Commanded vs. encoder-derived body velocity (normalized units). The first six primitives are from the v1 gesture run; the diagonals are from the v2 run.}
 \label{tab:odo}
@@ -217,17 +216,22 @@ Forward-right (v2) &  71 & (+0.313, -0.237, 0.000) & (+0.316, -0.243, -0.002) & 
 
 \begin{figure*}[!tb]
   \centering
-  \includegraphics[width=0.86\textwidth]{fig_wheel_en.pdf}
-  \caption{Wheel-speed control in the two-hand run. (a),(b) Set-point and measured speed for two wheels over a $50\,\mathrm{s}$ window. (c) Identified feed-forward lines. (d) Distribution of the steady-state tracking error (whiskers: 5th--95th percentile; diamond: mean); the dashed line marks $5\,\%$.}
-  \label{fig:wheel}
+  \includegraphics[width=0.8\textwidth]{fig_rtt_odo_en.pdf}
+  \caption{(a) Distribution of the UDP round-trip time for the three runs (log scale; values above $60\,\mathrm{ms}$ fall into the last bin). (b) Magnitude of the commanded and the encoder-derived velocity for the six primitives.}
+  \label{fig:rtt}
 \end{figure*}
 
 \begin{figure*}[!tb]
   \centering
-  \includegraphics[width=0.86\textwidth]{fig_rtt_odo_en.pdf}
-  \caption{(a) Distribution of the UDP round-trip time for the three runs (log scale; values above $60\,\mathrm{ms}$ fall into the last bin). (b) Magnitude of the commanded and the encoder-derived velocity for the six primitives.}
-  \label{fig:rtt}
+  \includegraphics[width=0.72\textwidth]{fig_wheel_en.pdf}
+  \caption{Wheel-speed control in the two-hand run. (a),(b) Set-point and measured speed for two wheels over a $50\,\mathrm{s}$ window. (c) Identified feed-forward lines. (d) Distribution of the steady-state tracking error (whiskers: 5th--95th percentile; diamond: mean); the dashed line marks $5\,\%$.}
+  \label{fig:wheel}
 \end{figure*}
+
+\subsection{Wheel Tracking and Body Motion}
+We evaluate wheel tracking only when the command has been constant for $0.3\,\mathrm{s}$ and at least $0.1$ in magnitude. Table~\ref{tab:ff} and Fig.~\ref{fig:wheel} give mean errors of $1.5$--$3.2\,\%$ of full scale over the three runs. The $95$th percentile of the error is higher, $4.4$--$4.8\,\%$ in the v1 gesture run and $6.1$--$7.4\,\%$ in the v2 run, so the $5\,\%$ mark is met by the mean but not by the tail in the latter. The front-right wheel, which has the largest dead zone, needs the highest mean duty ($0.48$--$0.49$ against $0.36$--$0.44$). We did not compare against a plain PID or against open loop on the same trajectories, so the benefit of the proposed controller over those is not quantified here.
+
+Table~\ref{tab:odo} compares the commanded and the encoder-derived body velocity from (\ref{eq:fk}) over segments with a constant primitive. The error in the main axis is below $0.6\,\%$ for translations and about $2.4$--$2.5\,\%$ for rotations, and the unintended motion in the other axes stays at or below $0.004$. These are velocities from the wheel encoders and do not include wheel slip on the floor, so they are not ground-truth position errors.
 
 %--------------------------------------------------------------------
 \section{Limitations}
@@ -236,6 +240,7 @@ The results come from one robot on one floor with one operator. There is no user
 \section{Conclusion}
 A single webcam and a single ESP32 sufficed to operate a four-wheel omnidirectional robot and its dashboard at the same time: one hand for the interface and the other for driving. On the logged runs the link round trip was a few milliseconds at the median, the mean wheel-speed error was $1.5$--$3.2\,\%$ of full scale, and the encoder-derived body motion agreed with the commands within $2.5\,\%$. The click anchor and the filter parameters need revisiting given the real-hand measurements. Planned work is a user study with real hands, a comparison with baseline controllers, a heading sensor, and obstacle sensing.
 
+\FloatBarrier
 \begin{thebibliography}{00}
 \bibitem{siegwart2011} R.~Siegwart, I.~R. Nourbakhsh, and D.~Scaramuzza, \emph{Introduction to Autonomous Mobile Robots}, 2nd~ed. Cambridge, MA, USA: MIT Press, 2011.
 \bibitem{zhang2020} F.~Zhang \emph{et al.}, ``MediaPipe Hands: On-device real-time hand tracking,'' arXiv:2006.10214, 2020 (CVPR Workshop on Computer Vision for AR/VR).

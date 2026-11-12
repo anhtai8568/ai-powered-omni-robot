@@ -19,12 +19,16 @@
 \usepackage{array}
 \usepackage{url}
 \usepackage{textcomp}
+\usepackage{placeins}
 
 \renewcommand{\figurename}{Hình}
 \renewcommand{\tablename}{Bảng}
 \renewcommand{\abstractname}{Tóm tắt}
 \renewcommand{\IEEEkeywordsname}{Từ khóa}
 \renewcommand{\refname}{Tài liệu tham khảo}
+\setcounter{dbltopnumber}{3}
+\renewcommand{\dbltopfraction}{0.95}
+\renewcommand{\textfraction}{0.05}
 \graphicspath{{../figures/}}
 \renewcommand{\arraystretch}{1.12}
 
@@ -200,11 +204,6 @@ Trên bàn tay thật (script \texttt{tests/real\_hand\_eval.py}, một người
 
 Với $38$ ($26$) cử chỉ chuyển động đã chốt ở lần chạy cử chỉ v1 (hai tay v2), thời gian từ cử chỉ được ghi đến khi bánh chịu tải nhiều nhất đạt $50$\,\% mục tiêu mới có trung vị $260$\,ms ($204$--$359$\,ms) và $257$\,ms ($203$--$309$\,ms). Con số này gồm các giới hạn gia tốc có chủ ý ở mục~III-D, nên không phải độ trễ nhỏ nhất có thể, và không gồm $4$ khung ($\approx133$\,ms) cần để chốt cử chỉ.
 
-\subsection{Bám tốc độ bánh và chuyển động thân}
-Chỉ tính bám tốc độ khi lệnh không đổi $0{,}3$\,s và có độ lớn từ $0{,}1$. Bảng~\ref{tab:ff} và Hình~\ref{fig:wheel} cho sai số trung bình $1{,}5$--$3{,}2$\,\% tốc độ tối đa trên ba lần chạy. Phân vị 95 của sai số cao hơn, $4{,}4$--$4{,}8$\,\% ở lần chạy cử chỉ v1 và $6{,}1$--$7{,}4$\,\% ở lần v2, nên mốc $5$\,\% đạt theo trung bình nhưng không đạt theo đuôi ở lần v2. Bánh trước phải, có vùng chết lớn nhất, cần PWM trung bình cao nhất ($0{,}48$--$0{,}49$ so với $0{,}36$--$0{,}44$). Chúng tôi không so sánh với PID thuần hay vòng hở trên cùng quỹ đạo, nên lợi ích của bộ điều khiển đề xuất so với chúng chưa được định lượng ở đây.
-
-Bảng~\ref{tab:odo} so lệnh với vận tốc thân tính từ encoder theo (\ref{eq:fk}) trên các đoạn có chuyển động cơ bản không đổi. Sai số theo trục chính dưới $0{,}6$\,\% khi tịnh tiến và khoảng $2{,}4$--$2{,}5$\,\% khi xoay, còn chuyển động ngoài ý muốn ở các trục khác không quá $0{,}004$. Đây là vận tốc từ encoder và không tính trượt bánh trên sàn, nên không phải sai số vị trí thật.
-
 \begin{table*}[!t]
 \caption{Lệnh so với vận tốc thân tính từ encoder (đơn vị chuẩn hóa). Sáu chuyển động đầu từ lần chạy cử chỉ v1; hai hàng chéo từ lần chạy v2.}
 \label{tab:odo}
@@ -229,17 +228,22 @@ Chéo tiến phải (v2) &  71 & (+0,313; -0,237; 0) & (+0,316; -0,243; -0,002) 
 
 \begin{figure*}[!tb]
   \centering
-  \includegraphics[width=0.86\textwidth]{fig_wheel_vi.pdf}
-  \caption{Điều khiển tốc độ bánh ở lần chạy hai tay. (a), (b) Giá trị đặt và đo của hai bánh trong cửa sổ $50$\,s. (c) Đường feedforward nhận dạng được. (d) Phân bố sai số bám xác lập (râu: phân vị 5--95; hình thoi: trung bình); nét đứt đánh dấu $5$\,\%.}
-  \label{fig:wheel}
+  \includegraphics[width=0.8\textwidth]{fig_rtt_odo_vi.pdf}
+  \caption{(a) Phân bố độ trễ khứ hồi UDP của ba lần chạy (thang log; giá trị trên $60$\,ms gom vào cột cuối). (b) Độ lớn vận tốc lệnh và vận tốc từ encoder cho sáu chuyển động cơ bản.}
+  \label{fig:rtt}
 \end{figure*}
 
 \begin{figure*}[!tb]
   \centering
-  \includegraphics[width=0.86\textwidth]{fig_rtt_odo_vi.pdf}
-  \caption{(a) Phân bố độ trễ khứ hồi UDP của ba lần chạy (thang log; giá trị trên $60$\,ms gom vào cột cuối). (b) Độ lớn vận tốc lệnh và vận tốc từ encoder cho sáu chuyển động cơ bản.}
-  \label{fig:rtt}
+  \includegraphics[width=0.72\textwidth]{fig_wheel_vi.pdf}
+  \caption{Điều khiển tốc độ bánh ở lần chạy hai tay. (a), (b) Giá trị đặt và đo của hai bánh trong cửa sổ $50$\,s. (c) Đường feedforward nhận dạng được. (d) Phân bố sai số bám xác lập (râu: phân vị 5--95; hình thoi: trung bình); nét đứt đánh dấu $5$\,\%.}
+  \label{fig:wheel}
 \end{figure*}
+
+\subsection{Bám tốc độ bánh và chuyển động thân}
+Chỉ tính bám tốc độ khi lệnh không đổi $0{,}3$\,s và có độ lớn từ $0{,}1$. Bảng~\ref{tab:ff} và Hình~\ref{fig:wheel} cho sai số trung bình $1{,}5$--$3{,}2$\,\% tốc độ tối đa trên ba lần chạy. Phân vị 95 của sai số cao hơn, $4{,}4$--$4{,}8$\,\% ở lần chạy cử chỉ v1 và $6{,}1$--$7{,}4$\,\% ở lần v2, nên mốc $5$\,\% đạt theo trung bình nhưng không đạt theo đuôi ở lần v2. Bánh trước phải, có vùng chết lớn nhất, cần PWM trung bình cao nhất ($0{,}48$--$0{,}49$ so với $0{,}36$--$0{,}44$). Chúng tôi không so sánh với PID thuần hay vòng hở trên cùng quỹ đạo, nên lợi ích của bộ điều khiển đề xuất so với chúng chưa được định lượng ở đây.
+
+Bảng~\ref{tab:odo} so lệnh với vận tốc thân tính từ encoder theo (\ref{eq:fk}) trên các đoạn có chuyển động cơ bản không đổi. Sai số theo trục chính dưới $0{,}6$\,\% khi tịnh tiến và khoảng $2{,}4$--$2{,}5$\,\% khi xoay, còn chuyển động ngoài ý muốn ở các trục khác không quá $0{,}004$. Đây là vận tốc từ encoder và không tính trượt bánh trên sàn, nên không phải sai số vị trí thật.
 
 %--------------------------------------------------------------------
 \section{Hạn chế}
@@ -248,6 +252,7 @@ Kết quả đến từ một robot trên một sàn với một người vận 
 \section{Kết luận}
 Một webcam và một ESP32 đủ để điều khiển đồng thời robot di động đa hướng bốn bánh và dashboard của nó: một tay cho giao diện và tay kia để lái. Trên các lần chạy đã ghi, độ trễ khứ hồi của đường truyền có trung vị vài mili giây, sai số tốc độ bánh trung bình là $1{,}5$--$3{,}2$\,\% tốc độ tối đa, và chuyển động thân suy ra từ encoder khớp với lệnh trong phạm vi $2{,}5$\,\%. Cơ chế neo điểm click và tham số bộ lọc cần được xem lại theo các phép đo trên tay thật. Hướng tiếp theo là khảo sát người dùng với bàn tay thật, so sánh với các bộ điều khiển cơ sở, cảm biến hướng và cảm biến vật cản.
 
+\FloatBarrier
 \begin{thebibliography}{00}
 \bibitem{siegwart2011} R.~Siegwart, I.~R. Nourbakhsh, and D.~Scaramuzza, \emph{Introduction to Autonomous Mobile Robots}, 2nd~ed. Cambridge, MA, USA: MIT Press, 2011.
 \bibitem{zhang2020} F.~Zhang \emph{et al.}, ``MediaPipe Hands: On-device real-time hand tracking,'' arXiv:2006.10214, 2020 (CVPR Workshop on Computer Vision for AR/VR).

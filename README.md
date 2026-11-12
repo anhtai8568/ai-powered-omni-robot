@@ -2,9 +2,9 @@
 
 Robot omni 4 bánh (bánh chéo 45°) điều khiển bằng cử chỉ tay qua camera laptop.
 
-**Bản 2 (nhánh `v2`):** điều khiển toàn bộ bằng hai tay. Tay không thuận lái robot như bản 1.
+**Bản 2 (`v2.0`):** điều khiển toàn bộ bằng hai tay. Tay không thuận lái robot như bản 1.
 Tay thuận điều khiển giao diện: di con trỏ, click, kéo thanh trượt và cần lái, xem thông số, đổi chế độ,
-mở cài đặt, ẩn hình camera.
+mở cài đặt, ẩn hình camera. Báo cáo đầy đủ ở `reports/` (mục Báo cáo bên dưới).
 
 ## Phiên bản 1 (`v1.0`): nhận diện ngón tay để điều khiển robot omni
 
@@ -24,6 +24,39 @@ Kết quả đo trên robot thật (sàn nhà, tốc độ 22-88%):
 
 Dữ liệu gốc: `docs/data/v1/` (log chạy thủ công và bằng cử chỉ). Tính lại các số trên:
 `python tests/analyze_drive_log.py docs/data/v1/drive_gesture.csv`. Quay lại bản này: `git checkout v1.0`.
+
+## Phiên bản 2 (`v2.0`): điều khiển bằng hai bàn tay
+
+Tay thuận điều khiển giao diện web (con trỏ, click, kéo), tay không thuận lái robot, cùng một camera.
+Ở chế độ Thủ công chỉ cần một tay. Phiên chạy hai tay trên sàn (266 s, 5020 dòng ghi 20 Hz) và các số đo lại:
+
+| Hạng mục | Kết quả |
+|---|---|
+| Camera + nhận diện tay (đo 359 khung, chưa có tay trong khung) | 29,9 khung/giây, suy luận trung bình 18,5 ms (P95 27,1 ms) |
+| WiFi laptop - ESP32 | RTT trung vị 6,6 ms, P95 16,1 ms, lớn nhất 909 ms |
+| Từ lúc chốt cử chỉ đến khi bánh đạt 50% | trung vị 257 ms (203-309 ms); gồm giới hạn gia tốc có chủ ý |
+| Bám tốc độ từng bánh | trung bình 2,3-2,6%; P95 6,1-7,4% (vượt mốc 5% ở đuôi) |
+| Kiểm thử tự động | 46 (logic tay) + 49 (con trỏ trong trình duyệt), đều đạt |
+
+**Kết quả âm trên tay thật:** bộ lọc One-Euro và cơ chế neo điểm click (`FREEZE_BACK`) trông hiệu quả trên bàn tay
+mô phỏng (giảm rung 65,5%, giảm lệch click 83,6%) nhưng trên tay thật (một người, 12 lần click) rung chỉ giảm 5%
+và neo không giảm độ lệch (ngón trỏ dịch trung vị 1,65 px, điểm tác động 4,15 px). Số chi tiết và giới hạn ở báo cáo.
+
+Dữ liệu: `docs/data/v2/`. Tính lại: `python tests/analyze_drive_log.py docs/data/v2/drive_twohand.csv`.
+Quay lại bản này: `git checkout v2.0`.
+
+## Báo cáo
+
+`reports/` có hai tài liệu, mỗi tài liệu hai bản (tiếng Anh và tiếng Việt), kèm PDF đã dựng:
+
+| Tài liệu | Nguồn LaTeX |
+|---|---|
+| Bài nghiên cứu (mẫu IEEE hội nghị) | `reports/research_paper/paper_en.tex`, `paper_vi.tex` |
+| Tài liệu kỹ thuật và thiết kế hệ thống | `reports/technical_document/report_en.tex`, `report_vi.tex` |
+
+Mọi hình và con số lấy từ dữ liệu trong `docs/data/` bằng `python reports/make_figures.py`
+(hình trong `reports/figures/`, số trong `reports/figures/stats.json`). Dựng lại PDF cần TeX Live
+(`latexmk -pdf paper_en.tex`) hoặc Tectonic; bản tiếng Việt nên dùng `xelatex`. Tên tác giả trong bài đang để trống.
 
 
 ## Cài đặt
@@ -90,6 +123,8 @@ Kê robot lên (bánh không chạm đất) trước khi chạy motor.
 | `pio device monitor` | Chỉ xem Serial, không nạp lại |
 | `python ai/demo.py` | Xem AI nhận hai tay, vai trò và con trỏ (`left` nếu thuận tay trái) |
 | `python tests/test_hands_logic.py` | Kiểm tra logic tay bằng bàn tay giả, không cần camera |
+| `python tests/real_hand_eval.py` | Đo rung và độ lệch khi click trên bàn tay thật (tắt server trước; giữ yên ngón tay theo hướng dẫn) |
+| `tests/handcursor_test.html` | 49 kiểm tra con trỏ trong trình duyệt: phục vụ thư mục gốc bằng `python -m http.server`, mở trang này (cửa sổ cao trên 500 px) |
 | `python communication/robot_link.py` | Gửi lệnh thử tới ESP32 (khi không chạy server) |
 
 Lệnh `pio` chạy trong thư mục `firmware/`. Thoát bằng Ctrl+C.
@@ -115,5 +150,6 @@ ESP32 DevKit V1, 2 driver L298N, 4 motor GM25-370 (1:78, encoder 8112 xung/vòng
 | `web/` | server và dashboard |
 | `communication/` | gửi lệnh tới ESP32 qua UDP |
 | `firmware/` | ESP32: WiFi, động học omni, PID |
-| `tests/` | đo FPS camera, phân tích log chạy thật |
-| `docs/` | sơ đồ chân, dữ liệu đo bản 1 |
+| `tests/` | đo FPS camera, phân tích log, kiểm thử con trỏ, đo trên tay thật |
+| `docs/` | sơ đồ chân, dữ liệu đo bản 1 và bản 2 |
+| `reports/` | bài nghiên cứu và tài liệu kỹ thuật (LaTeX, tiếng Anh và tiếng Việt), script sinh hình |

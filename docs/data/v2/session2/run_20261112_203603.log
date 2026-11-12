@@ -1,0 +1,100 @@
+[20:36:03.027] ======================================================================
+[20:36:03.027] Phiên chạy server 2026-11-12 20:36:03  (run_20261112_203603.log)
+[20:36:03.032] Mã: 08d3d43 nhánh main
+[20:36:03.035] Máy: Linux-7.0.0-42-generic-x86_64-with-glibc2.39 | 13th Gen Intel(R) Core(TM) i5-13420H | Python 3.12.3
+[20:36:03.035] Thư viện: cv2 5.0.0, mediapipe 1.2.0, numpy 2.5.4, fastapi 0.162.0, uvicorn 0.54.0
+[20:36:03.036] Biến môi trường: (mặc định)
+[20:36:03.036] Tệp phụ: ai_20261112_203603.csv (từng khung AI), drive_*.csv (4 bánh, 20 Hz, chỉ khi robot nối)
+[20:36:03.036] ======================================================================
+[20:36:03.081] INFO: Created TensorFlow Lite XNNPACK delegate for CPU.
+[20:36:03.102] WARNING: Logging before InitGoogle() is written to STDERR
+[20:36:03.102] W0000 00:00:1794495963.102527   77830 inference_feedback_manager.cc:121] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+[20:36:03.129] W0000 00:00:1794495963.129843   77830 inference_feedback_manager.cc:121] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+[20:36:03.134] Dashboard: http://127.0.0.1:8000/
+[20:36:03.167] [SỰ KIỆN] robot: mất kết nối / chưa kết nối
+[20:36:03.167] [SỰ KIỆN] camera: không mở được
+[20:36:03.319] [SỰ KIỆN] camera: mở được
+[20:36:03.487] W0000 00:00:1794495963.487815   77829 landmark_projection_calculator.cc:81] Using NORM_RECT without IMAGE_DIMENSIONS is only supported for the square ROI. Provide IMAGE_DIMENSIONS or use PROJECTION_MATRIX.
+[20:36:05.503] [SỰ KIỆN] dashboard: mở (1 đang mở)
+[20:36:08.287] [THỐNG KÊ] 17.3 khung/giây, suy luận 30.5 ms (P95 49.8), camera ok, robot CHƯA NỐI, chế độ manual, tay giao diện/lái 0/0, dashboard 1
+[20:36:12.167] [SỰ KIỆN] dashboard: mở (2 đang mở)
+[20:36:13.585] [THỐNG KÊ] 17.2 khung/giây, suy luận 31.5 ms (P95 55.0), camera ok, robot CHƯA NỐI, chế độ manual, tay giao diện/lái 0/0, dashboard 2
+[20:36:19.090] [THỐNG KÊ] 22.5 khung/giây, suy luận 32.6 ms (P95 57.0), camera ok, robot CHƯA NỐI, chế độ manual, tay giao diện/lái 0/0, dashboard 2
+[20:36:24.341] [THỐNG KÊ] 13.0 khung/giây, suy luận 34.8 ms (P95 60.3), camera ok, robot CHƯA NỐI, chế độ manual, tay giao diện/lái 1/0, dashboard 2
+[20:36:29.676] [THỐNG KÊ] 12.6 khung/giây, suy luận 34.5 ms (P95 60.8), camera ok, robot CHƯA NỐI, chế độ manual, tay giao diện/lái 1/0, dashboard 2
+[20:36:35.012] [THỐNG KÊ] 15.1 khung/giây, suy luận 39.5 ms (P95 62.1), camera ok, robot CHƯA NỐI, chế độ manual, tay giao diện/lái 1/0, dashboard 2
+[20:36:40.357] [THỐNG KÊ] 13.4 khung/giây, suy luận 43.5 ms (P95 64.2), camera ok, robot CHƯA NỐI, chế độ manual, tay giao diện/lái 1/0, dashboard 2
+[20:36:45.704] [THỐNG KÊ] 15.2 khung/giây, suy luận 46.1 ms (P95 66.1), camera ok, robot CHƯA NỐI, chế độ manual, tay giao diện/lái 0/0, dashboard 2
+[20:36:51.001] [THỐNG KÊ] 11.5 khung/giây, suy luận 49.4 ms (P95 68.6), camera ok, robot CHƯA NỐI, chế độ manual, tay giao diện/lái 1/0, dashboard 2
+[20:36:56.272] [THỐNG KÊ] 11.2 khung/giây, suy luận 52.5 ms (P95 76.1), camera ok, robot CHƯA NỐI, chế độ manual, tay giao diện/lái 1/0, dashboard 2
+[20:37:00.478] [SỰ KIỆN] tốc độ: 0.91
+[20:37:00.572] [SỰ KIỆN] tốc độ: 0.81
+[20:37:00.670] [SỰ KIỆN] tốc độ: 0.70
+[20:37:01.538] [THỐNG KÊ] 11.4 khung/giây, suy luận 54.3 ms (P95 78.1), camera ok, robot CHƯA NỐI, chế độ manual, tay giao diện/lái 1/0, dashboard 2
+[20:37:06.837] [THỐNG KÊ] 11.8 khung/giây, suy luận 54.6 ms (P95 77.6), camera ok, robot CHƯA NỐI, chế độ manual, tay giao diện/lái 1/0, dashboard 2
+[20:37:12.125] [THỐNG KÊ] 13.5 khung/giây, suy luận 59.3 ms (P95 81.1), camera ok, robot CHƯA NỐI, chế độ manual, tay giao diện/lái 1/0, dashboard 2
+[20:37:17.409] [THỐNG KÊ] 13.4 khung/giây, suy luận 61.4 ms (P95 81.3), camera ok, robot CHƯA NỐI, chế độ manual, tay giao diện/lái 1/0, dashboard 2
+[20:37:22.773] [THỐNG KÊ] 13.2 khung/giây, suy luận 58.7 ms (P95 78.5), camera ok, robot CHƯA NỐI, chế độ manual, tay giao diện/lái 1/0, dashboard 2
+[20:37:28.090] [THỐNG KÊ] 12.9 khung/giây, suy luận 57.5 ms (P95 77.9), camera ok, robot CHƯA NỐI, chế độ manual, tay giao diện/lái 1/0, dashboard 2
+[20:37:33.389] [SỰ KIỆN] chế độ: gesture
+[20:37:33.422] [THỐNG KÊ] 15.2 khung/giây, suy luận 53.6 ms (P95 74.7), camera ok, robot CHƯA NỐI, chế độ gesture, tay giao diện/lái 1/0, dashboard 2
+[20:37:38.803] [THỐNG KÊ] 12.9 khung/giây, suy luận 49.4 ms (P95 70.2), camera ok, robot CHƯA NỐI, chế độ gesture, tay giao diện/lái 0/0, dashboard 2
+[20:37:44.230] [THỐNG KÊ] 17.8 khung/giây, suy luận 43.1 ms (P95 60.2), camera ok, robot CHƯA NỐI, chế độ gesture, tay giao diện/lái 0/0, dashboard 2
+[20:37:49.570] [THỐNG KÊ] 21.3 khung/giây, suy luận 37.0 ms (P95 56.0), camera ok, robot CHƯA NỐI, chế độ gesture, tay giao diện/lái 0/0, dashboard 2
+[20:37:54.753] [THỐNG KÊ] 19.5 khung/giây, suy luận 31.1 ms (P95 44.3), camera ok, robot CHƯA NỐI, chế độ gesture, tay giao diện/lái 0/0, dashboard 2
+[20:37:59.978] [THỐNG KÊ] 22.6 khung/giây, suy luận 29.4 ms (P95 37.5), camera ok, robot CHƯA NỐI, chế độ gesture, tay giao diện/lái 0/0, dashboard 2
+[20:38:05.301] [THỐNG KÊ] 13.1 khung/giây, suy luận 29.3 ms (P95 40.6), camera ok, robot CHƯA NỐI, chế độ gesture, tay giao diện/lái 0/1, dashboard 2
+[20:38:08.366] [SỰ KIỆN] dashboard: đóng (1 còn lại)
+[20:38:10.569] [THỐNG KÊ] 13.3 khung/giây, suy luận 36.4 ms (P95 71.9), camera ok, robot CHƯA NỐI, chế độ gesture, tay giao diện/lái 1/0, dashboard 1
+[20:38:15.744] [THỐNG KÊ] 15.5 khung/giây, suy luận 40.6 ms (P95 73.2), camera ok, robot CHƯA NỐI, chế độ gesture, tay giao diện/lái 1/1, dashboard 1
+[20:38:20.920] [THỐNG KÊ] 17.2 khung/giây, suy luận 45.1 ms (P95 73.7), camera ok, robot CHƯA NỐI, chế độ gesture, tay giao diện/lái 1/1, dashboard 1
+[20:38:26.151] [THỐNG KÊ] 15.6 khung/giây, suy luận 47.5 ms (P95 71.4), camera ok, robot CHƯA NỐI, chế độ gesture, tay giao diện/lái 1/1, dashboard 1
+[20:38:31.348] [THỐNG KÊ] 19.5 khung/giây, suy luận 45.1 ms (P95 58.5), camera ok, robot CHƯA NỐI, chế độ gesture, tay giao diện/lái 1/0, dashboard 1
+[20:38:36.500] [THỐNG KÊ] 11.6 khung/giây, suy luận 46.6 ms (P95 66.4), camera ok, robot CHƯA NỐI, chế độ gesture, tay giao diện/lái 1/0, dashboard 1
+[20:38:41.684] [THỐNG KÊ] 15.4 khung/giây, suy luận 46.6 ms (P95 70.1), camera ok, robot CHƯA NỐI, chế độ gesture, tay giao diện/lái 1/0, dashboard 1
+[20:38:46.843] [THỐNG KÊ] 15.4 khung/giây, suy luận 45.9 ms (P95 70.9), camera ok, robot CHƯA NỐI, chế độ gesture, tay giao diện/lái 0/0, dashboard 1
+[20:38:52.031] [THỐNG KÊ] 23.2 khung/giây, suy luận 38.6 ms (P95 68.8), camera ok, robot CHƯA NỐI, chế độ gesture, tay giao diện/lái 0/0, dashboard 1
+[20:38:57.236] [THỐNG KÊ] 15.5 khung/giây, suy luận 34.3 ms (P95 55.5), camera ok, robot CHƯA NỐI, chế độ gesture, tay giao diện/lái 0/0, dashboard 1
+[20:39:02.490] [THỐNG KÊ] 23.2 khung/giây, suy luận 30.7 ms (P95 45.4), camera ok, robot CHƯA NỐI, chế độ gesture, tay giao diện/lái 0/0, dashboard 1
+[20:39:07.659] [THỐNG KÊ] 23.4 khung/giây, suy luận 31.9 ms (P95 46.7), camera ok, robot CHƯA NỐI, chế độ gesture, tay giao diện/lái 0/0, dashboard 1
+[20:39:12.942] [THỐNG KÊ] 21.2 khung/giây, suy luận 32.3 ms (P95 50.2), camera ok, robot CHƯA NỐI, chế độ gesture, tay giao diện/lái 0/0, dashboard 1
+[20:39:18.126] [THỐNG KÊ] 19.2 khung/giây, suy luận 34.0 ms (P95 50.6), camera ok, robot CHƯA NỐI, chế độ gesture, tay giao diện/lái 0/0, dashboard 1
+[20:39:23.292] [THỐNG KÊ] 17.6 khung/giây, suy luận 34.7 ms (P95 52.1), camera ok, robot CHƯA NỐI, chế độ gesture, tay giao diện/lái 0/0, dashboard 1
+[20:39:28.465] [THỐNG KÊ] 17.4 khung/giây, suy luận 34.5 ms (P95 56.9), camera ok, robot CHƯA NỐI, chế độ gesture, tay giao diện/lái 0/0, dashboard 1
+[20:39:33.638] [THỐNG KÊ] 15.5 khung/giây, suy luận 36.1 ms (P95 58.7), camera ok, robot CHƯA NỐI, chế độ gesture, tay giao diện/lái 0/1, dashboard 1
+[20:39:38.837] [THỐNG KÊ] 21.3 khung/giây, suy luận 35.4 ms (P95 58.7), camera ok, robot CHƯA NỐI, chế độ gesture, tay giao diện/lái 0/0, dashboard 1
+[20:39:44.039] [THỐNG KÊ] 22.9 khung/giây, suy luận 34.0 ms (P95 53.7), camera ok, robot CHƯA NỐI, chế độ gesture, tay giao diện/lái 0/0, dashboard 1
+[20:39:49.244] [THỐNG KÊ] 23.2 khung/giây, suy luận 29.4 ms (P95 37.1), camera ok, robot CHƯA NỐI, chế độ gesture, tay giao diện/lái 0/0, dashboard 1
+[20:39:54.436] [THỐNG KÊ] 25.2 khung/giây, suy luận 28.9 ms (P95 36.5), camera ok, robot CHƯA NỐI, chế độ gesture, tay giao diện/lái 0/0, dashboard 1
+[20:39:59.637] [THỐNG KÊ] 20.9 khung/giây, suy luận 28.4 ms (P95 34.5), camera ok, robot CHƯA NỐI, chế độ gesture, tay giao diện/lái 0/0, dashboard 1
+[20:40:04.811] [THỐNG KÊ] 22.9 khung/giây, suy luận 29.1 ms (P95 37.1), camera ok, robot CHƯA NỐI, chế độ gesture, tay giao diện/lái 0/0, dashboard 1
+[20:40:10.004] [THỐNG KÊ] 23.1 khung/giây, suy luận 29.3 ms (P95 36.0), camera ok, robot CHƯA NỐI, chế độ gesture, tay giao diện/lái 0/0, dashboard 1
+[20:40:15.189] [THỐNG KÊ] 23.3 khung/giây, suy luận 29.0 ms (P95 36.5), camera ok, robot CHƯA NỐI, chế độ gesture, tay giao diện/lái 0/0, dashboard 1
+[20:40:20.330] [THỐNG KÊ] 13.5 khung/giây, suy luận 36.3 ms (P95 70.1), camera ok, robot CHƯA NỐI, chế độ gesture, tay giao diện/lái 1/0, dashboard 1
+[20:40:25.525] [THỐNG KÊ] 14.8 khung/giây, suy luận 42.4 ms (P95 71.0), camera ok, robot CHƯA NỐI, chế độ gesture, tay giao diện/lái 1/0, dashboard 1
+[20:40:30.693] [THỐNG KÊ] 21.3 khung/giây, suy luận 46.6 ms (P95 72.2), camera ok, robot CHƯA NỐI, chế độ gesture, tay giao diện/lái 0/0, dashboard 1
+[20:40:35.885] [THỐNG KÊ] 25.1 khung/giây, suy luận 43.6 ms (P95 70.7), camera ok, robot CHƯA NỐI, chế độ gesture, tay giao diện/lái 0/0, dashboard 1
+[20:40:41.076] [THỐNG KÊ] 21.3 khung/giây, suy luận 32.5 ms (P95 61.6), camera ok, robot CHƯA NỐI, chế độ gesture, tay giao diện/lái 0/0, dashboard 1
+[20:40:46.274] [THỐNG KÊ] 21.2 khung/giây, suy luận 28.7 ms (P95 36.5), camera ok, robot CHƯA NỐI, chế độ gesture, tay giao diện/lái 0/0, dashboard 1
+[20:40:51.459] [THỐNG KÊ] 21.4 khung/giây, suy luận 28.4 ms (P95 34.6), camera ok, robot CHƯA NỐI, chế độ gesture, tay giao diện/lái 0/0, dashboard 1
+[20:40:56.663] [THỐNG KÊ] 24.6 khung/giây, suy luận 28.6 ms (P95 35.5), camera ok, robot CHƯA NỐI, chế độ gesture, tay giao diện/lái 0/0, dashboard 1
+[20:41:01.870] [THỐNG KÊ] 22.6 khung/giây, suy luận 28.8 ms (P95 36.1), camera ok, robot CHƯA NỐI, chế độ gesture, tay giao diện/lái 0/0, dashboard 1
+[20:41:07.056] [THỐNG KÊ] 21.2 khung/giây, suy luận 28.6 ms (P95 35.9), camera ok, robot CHƯA NỐI, chế độ gesture, tay giao diện/lái 0/0, dashboard 1
+[20:41:12.247] [THỐNG KÊ] 13.3 khung/giây, suy luận 33.5 ms (P95 57.1), camera ok, robot CHƯA NỐI, chế độ gesture, tay giao diện/lái 1/0, dashboard 1
+[20:41:17.427] [THỐNG KÊ] 15.1 khung/giây, suy luận 41.0 ms (P95 71.5), camera ok, robot CHƯA NỐI, chế độ gesture, tay giao diện/lái 1/0, dashboard 1
+[20:41:22.617] [THỐNG KÊ] 20.8 khung/giây, suy luận 45.3 ms (P95 74.1), camera ok, robot CHƯA NỐI, chế độ gesture, tay giao diện/lái 0/0, dashboard 1
+[20:41:27.832] [THỐNG KÊ] 17.0 khung/giây, suy luận 44.4 ms (P95 74.1), camera ok, robot CHƯA NỐI, chế độ gesture, tay giao diện/lái 0/0, dashboard 1
+[20:41:33.045] [THỐNG KÊ] 19.5 khung/giây, suy luận 34.9 ms (P95 66.7), camera ok, robot CHƯA NỐI, chế độ gesture, tay giao diện/lái 0/0, dashboard 1
+[20:41:38.261] [THỐNG KÊ] 22.7 khung/giây, suy luận 30.7 ms (P95 43.9), camera ok, robot CHƯA NỐI, chế độ gesture, tay giao diện/lái 0/0, dashboard 1
+[20:41:43.418] [THỐNG KÊ] 15.6 khung/giây, suy luận 32.3 ms (P95 50.8), camera ok, robot CHƯA NỐI, chế độ gesture, tay giao diện/lái 0/0, dashboard 1
+[20:41:48.544] [THỐNG KÊ] 23.5 khung/giây, suy luận 33.4 ms (P95 52.5), camera ok, robot CHƯA NỐI, chế độ gesture, tay giao diện/lái 0/0, dashboard 1
+[20:41:53.754] [THỐNG KÊ] 23.1 khung/giây, suy luận 35.2 ms (P95 57.1), camera ok, robot CHƯA NỐI, chế độ gesture, tay giao diện/lái 0/0, dashboard 1
+[20:41:58.964] [THỐNG KÊ] 23.0 khung/giây, suy luận 31.0 ms (P95 50.1), camera ok, robot CHƯA NỐI, chế độ gesture, tay giao diện/lái 0/0, dashboard 1
+[20:42:04.192] [THỐNG KÊ] 19.0 khung/giây, suy luận 30.2 ms (P95 44.7), camera ok, robot CHƯA NỐI, chế độ gesture, tay giao diện/lái 0/0, dashboard 1
+[20:42:06.155] [SỰ KIỆN] dashboard: đóng (0 còn lại)
+[20:42:06.460] ----------------------------------------------------------------------
+[20:42:06.460] Tóm tắt: chạy 363 s, 6512 khung AI, 18.0 khung/giây trong lúc có hình
+[20:42:06.460]   suy luận tay: trung bình 37.2 ms, trung vị 31.8, P95 67.0, lớn nhất 165.7
+[20:42:06.461]   sự kiện: camera x2, chế độ x1, dashboard x4, robot x1, tốc độ x3
+[20:42:06.461]   tệp: run_20261112_203603.log, ai_20261112_203603.csv
+[20:42:06.461] ----------------------------------------------------------------------

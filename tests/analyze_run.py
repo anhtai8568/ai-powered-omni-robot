@@ -32,6 +32,47 @@ def summ(xs, unit=""):
     return f"TB {st.mean(xs):.1f}{unit}, trung vị {st.median(xs):.1f}, P95 {pct(xs, .95):.1f}, lớn nhất {max(xs):.1f}"
 
 
+def latency(ai, dr):
+    """Độ trễ (ms) từ khung chốt cử chỉ: đến lúc bánh tải nhiều nhất đạt 50% (lat) và đến lúc lệnh rời laptop (lat_cmd).
+    Trả về (lat, lat_cmd, tải đích |T| của từng lần)."""
+    dr_t = [float(r["t"]) for r in dr]
+    moving = lambda g: g.startswith(("point", "v_"))
+    mode_at = lambda t: dr[max(0, bisect.bisect_right(dr_t, t) - 1)]["mode"]
+    segs, cur = [], [ai[0]]
+    for r in ai[1:]:
+        if r["gesture"] != cur[-1]["gesture"]:
+            segs.append(cur)
+            cur = [r]
+        else:
+            cur.append(r)
+    segs.append(cur)
+    lat, lat_cmd, targets = [], [], []
+    for s in segs:
+        g = s[0]["gesture"]
+        t0, t1 = float(s[0]["t"]), float(s[-1]["t"])
+        if not g or not moving(g) or t1 - t0 < 0.8 or not (dr_t[0] < t0 < dr_t[-1] - 2):
+            continue
+        if mode_at(t0) != "gesture":
+            continue
+        i0 = bisect.bisect_left(dr_t, t0)
+        i1 = bisect.bisect_left(dr_t, t0 + 0.8)
+        T = [float(dr[i1][f"{w}_muon"]) for w in W]
+        k = max(range(4), key=lambda j: abs(T[j]))
+        s0 = float(dr[max(i0 - 1, 0)][f"{W[k]}_do"])
+        if abs(T[k] - s0) < 0.1:
+            continue
+        targets.append(abs(T[k]))
+        for j in range(i0, min(i0 + 60, len(dr))):
+            if (float(dr[j][f"{W[k]}_do"]) - s0) / (T[k] - s0) >= 0.5:
+                lat.append((dr_t[j] - t0) * 1000)
+                break
+        for j in range(i0, min(i0 + 60, len(dr))):  # từ khung chốt đến lệnh rời laptop (vx, vy, w khác 0)
+            if abs(float(dr[j]["vx"])) + abs(float(dr[j]["vy"])) + abs(float(dr[j]["w"])) > 0.02:
+                lat_cmd.append((dr_t[j] - t0) * 1000)
+                break
+    return lat, lat_cmd, targets
+
+
 def main(ai_path, drive_path):
     ai, dr = load(ai_path), load(drive_path)
     ai_t = [float(r["t"]) for r in ai]
@@ -50,40 +91,7 @@ def main(ai_path, drive_path):
     gaps = [(b - a) * 1000 for a, b in zip(ai_t, ai_t[1:])]
     print(f"  khoảng cách giữa hai khung liên tiếp: {summ(gaps)}")
 
-    # --- độ trễ từ khung chốt cử chỉ đến bánh
-    moving = lambda g: g.startswith(("point", "v_"))
-    mode_at = lambda t: dr[max(0, bisect.bisect_right(dr_t, t) - 1)]["mode"]
-    segs, cur = [], [ai[0]]
-    for r in ai[1:]:
-        if r["gesture"] != cur[-1]["gesture"]:
-            segs.append(cur)
-            cur = [r]
-        else:
-            cur.append(r)
-    segs.append(cur)
-    lat, lat_cmd = [], []
-    for s in segs:
-        g = s[0]["gesture"]
-        t0, t1 = float(s[0]["t"]), float(s[-1]["t"])
-        if not g or not moving(g) or t1 - t0 < 0.8 or not (dr_t[0] < t0 < dr_t[-1] - 2):
-            continue
-        if mode_at(t0) != "gesture":
-            continue
-        i0 = bisect.bisect_left(dr_t, t0)
-        i1 = bisect.bisect_left(dr_t, t0 + 0.8)
-        T = [float(dr[i1][f"{w}_muon"]) for w in W]
-        k = max(range(4), key=lambda j: abs(T[j]))
-        s0 = float(dr[max(i0 - 1, 0)][f"{W[k]}_do"])
-        if abs(T[k] - s0) < 0.1:
-            continue
-        for j in range(i0, min(i0 + 60, len(dr))):
-            if (float(dr[j][f"{W[k]}_do"]) - s0) / (T[k] - s0) >= 0.5:
-                lat.append((dr_t[j] - t0) * 1000)
-                break
-        for j in range(i0, min(i0 + 60, len(dr))):  # từ khung chốt đến lệnh rời laptop (vx, vy, w khác 0)
-            if abs(float(dr[j]["vx"])) + abs(float(dr[j]["vy"])) + abs(float(dr[j]["w"])) > 0.02:
-                lat_cmd.append((dr_t[j] - t0) * 1000)
-                break
+    lat, lat_cmd, _ = latency(ai, dr)
     if lat:
         print(f"\nTừ khung camera mà bộ lọc chốt cử chỉ -> bánh tải nhiều nhất đạt 50% ({len(lat)} lần):")
         print(f"  {summ(lat, ' ms')}")

@@ -32,9 +32,16 @@ from ai.drive.gestures import classify  # noqa: E402
 from ai.hands import HandTracker, RoleAssigner, draw_hand, split_roles  # noqa: E402
 from ai.ui.cursor import Cursor  # noqa: E402
 from communication.robot_link import RobotLink  # noqa: E402
+from web.runlog import RunLog  # noqa: E402
 
 STATIC = BASE / "static"
 LOGS = BASE.parent / "logs"
+
+# Nhật ký cả lần chạy (logs/run_*.log + logs/ai_*.csv). Chỉ bật khi chạy trực tiếp `python web/server.py`,
+# bật trước mọi thứ khác để bắt luôn cảnh báo của MediaPipe/OpenCV lúc nạp.
+runlog = RunLog(LOGS, BASE.parent)
+if __name__ == "__main__":
+    runlog.start()
 
 HOST = os.environ.get("HOST", "127.0.0.1")
 PORT = int(os.environ.get("PORT", "8000"))
@@ -150,15 +157,18 @@ class DriveLog:
 drive_log = DriveLog()
 
 
-def process_frame(frame):
+def process_frame(frame, t_frame=None):
     """AI hai bàn tay (chạy trong thread riêng, không chặn vòng điều khiển). Vẽ khung xương lên frame.
 
     Tay thuận -> con trỏ giao diện. Tay không thuận -> cử chỉ lái robot (như bản 1).
     Luôn chạy, kể cả ở chế độ thủ công, để người dùng thấy AI nhận ra gì trước khi bật chế độ cử chỉ.
     Nếu AI bị treo, gesture_ts không được cập nhật và control_loop tự dừng robot sau CMD_TIMEOUT.
     """
+    t_start = time.perf_counter()
     h, w = frame.shape[:2]
-    hands = roles.assign(tracker.detect(frame))
+    detected = tracker.detect(frame)
+    t_infer = time.perf_counter()
+    hands = roles.assign(detected)
     # Thủ công: robot không lái bằng cử chỉ, nên chỉ cần một tay (tay nào cũng là tay giao diện)
     ui_hand, drive_hand = split_roles(hands, state.dominant, drive_active=state.mode == "gesture")
 
@@ -169,6 +179,10 @@ def process_frame(frame):
     cursor.region = state.region
     state.cursor = cursor.update(ui_hand.pts if ui_hand else None, w, h, time.monotonic())
     state.hands = {"ui": ui_hand is not None, "drive": drive_hand is not None}
+
+    runlog.ai_row(t_frame if t_frame is not None else time.time(), (t_infer - t_start) * 1000,
+                  (time.perf_counter() - t_start) * 1000, len(hands), state.cursor["pose"], state.gesture,
+                  state.gesture_cmd, state.cursor)
 
     if ui_hand:
         draw_hand(frame, ui_hand, "ui", f"UI {state.cursor['pose']}")
@@ -253,7 +267,7 @@ async def video_loop():
             continue
         last = seq
         state.frame_count += 1
-        frame = await asyncio.to_thread(process_frame, frame)
+        frame = await asyncio.to_thread(process_frame, frame, time.time())
         # Gửi con trỏ trước khi mã hóa JPEG: con trỏ không phải chờ hình
         await broadcast_json({"type": "cursor", **state.cursor})
         if HAND_OPEN and auto_open.update(any(state.hands.values()), bool(state.dashboards), time.time()):
@@ -275,6 +289,7 @@ async def control_loop():
     period = 1.0 / CONTROL_HZ
     tick = 0
     fps_t0 = time.time()
+    was_connected, was_camera = None, None
     while True:
         now = time.time()
         vx = vy = w = 0.0
@@ -290,6 +305,12 @@ async def control_loop():
                          for k, v in (("vx", vx), ("vy", vy), ("w", w))}
         await robot.send(state.out)
         drive_log.write()
+        if robot.connected != was_connected:
+            runlog.event("robot", "đã kết nối" if robot.connected else "mất kết nối / chưa kết nối")
+            was_connected = robot.connected
+        if cam.opened != was_camera:
+            runlog.event("camera", "mở được" if cam.opened else "không mở được")
+            was_camera = cam.opened
         # Lệnh thật gửi cho robot + cử chỉ, mỗi tick (20 lần/giây) để web hiển thị tức thì
         await broadcast_json({"type": "telemetry", "out": state.out, "gesture": state.gesture,
                               "hands": state.hands})
@@ -302,6 +323,9 @@ async def control_loop():
             fps_t0 = now
             await broadcast_status()
             drive_log.flush()
+        if tick % (CONTROL_HZ * 5) == 0:  # 5 giây một dòng thống kê vào nhật ký
+            runlog.stats(state.fps, robot.rtt_ms, robot.connected, state.mode, state.estop, state.hands,
+                         len(state.dashboards), cam.opened)
 
         await asyncio.sleep(period)
 
@@ -318,6 +342,7 @@ async def lifespan(app: FastAPI):
     tracker.close()
     robot.close()
     drive_log.close()
+    runlog.close()
 
 
 app = FastAPI(lifespan=lifespan)
@@ -346,6 +371,8 @@ async def handle_dashboard_message(d: dict):
         state.manual_cmd = (clamp(d.get("vx")), clamp(d.get("vy")), clamp(d.get("w")))
         state.manual_ts = time.time()
     elif kind == "estop":
+        if bool(d.get("on")) != state.estop:
+            runlog.event("dừng khẩn cấp", "BẬT" if d.get("on") else "tắt")
         state.estop = bool(d.get("on"))
         await broadcast_status()
     elif kind == "speed":
@@ -354,9 +381,14 @@ async def handle_dashboard_message(d: dict):
         except (TypeError, ValueError):
             return  # giá trị rác: giữ nguyên tốc độ cũ (không để thành 0)
         if v == v:  # bỏ NaN
-            state.speed = max(0.1, min(1.0, v))
+            new = max(0.1, min(1.0, v))
+            if abs(new - state.speed) >= 0.05:  # thanh trượt gửi liên tục: chỉ ghi khi đổi đáng kể
+                runlog.event("tốc độ", f"{new:.2f}")
+            state.speed = new
             await broadcast_status()
     elif kind == "mode" and d.get("mode") in ("manual", "gesture"):
+        if d["mode"] != state.mode:
+            runlog.event("chế độ", d["mode"])
         state.mode = d["mode"]
         await broadcast_status()
     elif kind == "video":
@@ -379,6 +411,7 @@ async def handle_dashboard_message(d: dict):
 async def ws_dashboard(ws: WebSocket):
     await ws.accept()
     state.dashboards.add(ws)
+    runlog.event("dashboard", f"mở ({len(state.dashboards)} đang mở)")
     await ws.send_text(json.dumps(status_msg()))
     try:
         while True:
@@ -396,6 +429,7 @@ async def ws_dashboard(ws: WebSocket):
                 await handle_dashboard_message(data)
     finally:
         state.dashboards.discard(ws)
+        runlog.event("dashboard", f"đóng ({len(state.dashboards)} còn lại)")
         state.manual_ts = 0.0  # dashboard đóng -> dừng robot
 
 

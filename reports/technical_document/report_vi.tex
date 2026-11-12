@@ -66,11 +66,11 @@ Các chỉ tiêu trong Bảng~\ref{tab:spec} do nhóm tự đặt làm mốc tha
 \toprule
 Hạng mục & Chỉ tiêu & Kết quả đo \\
 \midrule
-Tốc độ vòng camera + nhận diện tay & $\ge 25$ fps & 29,9 fps; suy luận trung bình 18,5 ms (P95 27,1 ms), khi chưa có tay trong khung \\
+Tốc độ vòng camera + nhận diện tay & $\ge 25$ fps & 29,9 fps khi không có tay (phép đo riêng); 18,0--25,5 fps trong các phiên server, suy luận 45,5--55,5 ms khi có một tay \\
 Độ trễ khứ hồi UDP (RTT) & $<50$ ms (trung vị) & trung vị 6,6--8,1 ms; P95 16,1--26,1 ms \\
 Sai số bám tốc độ từng bánh (trung bình) & $<5{,}0\,\%$ & 1,5--3,2\,\% tốc độ tối đa; P95 4,4--7,4\,\% \\
 Sai lệch vận tốc thân robot so với lệnh & $<5{,}0\,\%$ & 0,1--2,5\,\% theo trục chính; trục khác $\le 0{,}004$ \\
-Từ lúc chốt cử chỉ đến khi bánh đạt 50\,\% & $<400$ ms & trung vị 257--260 ms (203--359 ms) \\
+Từ lúc chốt cử chỉ đến khi bánh đạt 50\\,\\% & $<400$ ms & trung vị 427 ms (321--496), 15 lần, tính từ khung camera (chưa đạt); các lần trước 257--260 ms, tính từ cử chỉ ghi trong log \\
 Ngắt an toàn khi mất lệnh & $<500$ ms & ESP32 300 ms; laptop 400 ms; chống kẹt bánh 700 ms \\
 \bottomrule
 \end{tabular}
@@ -81,7 +81,7 @@ Chú ý: tốc độ 29,9 fps và suy luận 18,5 ms đo ngày 12/11/2026 trên 
 Hệ thống gồm hai phân hệ nối với nhau bằng Wi-Fi do chính ESP32 phát (SSID \code{omni-robot}, IP cố định \code{192.168.4.1}, cổng UDP 4210), không cần Internet (Hình~\ref{fig:arch}).
 
 \begin{itemize}
-  \item \textbf{Laptop (host)}: \code{ai/camera.py} đọc ảnh MJPG $640\times480$ ở 30 fps trong một luồng riêng, chỉ giữ khung mới nhất. MediaPipe HandLandmarker lấy 21 điểm mốc cho tối đa 2 tay. \code{RoleAssigner} và \code{split\_roles()} chia tay thuận (con trỏ, \code{ai/ui/cursor.py}) và tay không thuận (cử chỉ lái, \code{ai/drive/}). Vòng \code{control\_loop()} 20 Hz chọn lệnh theo chế độ, giới hạn gia tốc rồi gửi UDP qua \code{RobotLink}.
+  \item \textbf{Laptop (host)}: \code{ai/camera.py} đọc ảnh MJPG $1280\times720$ ở 30 fps trong một luồng riêng (nhận diện chạy trên bản sao rộng 640 px), chỉ giữ khung mới nhất. MediaPipe HandLandmarker lấy 21 điểm mốc cho tối đa 2 tay. \code{RoleAssigner} và \code{split\_roles()} chia tay thuận (con trỏ, \code{ai/ui/cursor.py}) và tay không thuận (cử chỉ lái, \code{ai/drive/}). Vòng \code{control\_loop()} 20 Hz chọn lệnh theo chế độ, giới hạn gia tốc rồi gửi UDP qua \code{RobotLink}.
   \item \textbf{ESP32 (edge)}: nhận gói lệnh, kiểm tra quyền chủ duy nhất và hạn 300 ms, tính động học nghịch, chạy 4 bộ điều khiển tốc độ mỗi 10 ms, xuất PWM ra hai L298N và trả về gói phản hồi gồm tốc độ đặt, tốc độ đo và PWM của 4 bánh.
 \end{itemize}
 
@@ -193,6 +193,8 @@ Con trỏ hiển thị vẫn bám đầu ngón tay nên kéo vẫn mượt. Sau 
   \label{fig:click}
 \end{figure}
 
+\textbf{Ánh xạ gần mép khung.}\label{sec:edge} Việc nhận diện tay hỏng khi viền khung cắt bàn tay, nên con trỏ trùng đầu ngón không thể tới các góc màn hình. Đặt $d=f-\tfrac12$ là vị trí đầu ngón trong khung ($f\in[0,1]$, theo từng trục), $a=0{,}10$ là nửa bề rộng vùng giữa và $b=0{,}44$ là khoảng cách mà tại đó con trỏ phải chạm mép màn hình. Với $k=(0{,}5-b)/(b-a)^2$ toạ độ đã kéo giãn là $s=\tfrac12+\operatorname{sgn}(d)\min\{\tfrac12,\ |d|+k(|d|-a)^2\}$ khi $|d|>a$ và $s=f$ ở các chỗ còn lại, nhờ đó con trỏ bám đầu ngón ở giữa, độ vượt trước tăng dần không có điểm gãy (độ lợi cực đại $1{,}35$) và chạm mép màn hình khi đầu ngón cách viền khung $6\,\%$. Nếu tay mất khi đầu ngón nằm trong $12\,\%$ sát viền, con trỏ và tư thế được giữ $1{,}0\,\mathrm{s}$ thay vì $0{,}3\,\mathrm{s}$. Bản đầu, với đoạn dốc tuyến tính bắt đầu ở $|d|=0{,}30$ và độ lợi cực đại $1{,}67$, làm con trỏ chạy trước đầu ngón thấy rõ nên đã được thay bằng bản này. Chín trong $55$ kiểm tra tự động bao phủ ánh xạ này.
+
 \subsection{Giao thức truyền thông}
 Lệnh chuyển động liên tục 20 Hz chỉ có giá trị mới nhất là hữu ích, nên chọn UDP: gói rớt bị bỏ qua và 50 ms sau có gói thay thế, còn TCP sẽ giữ các gói mới sau gói bị mất. Trên ESP32 tắt chế độ ngủ của modem Wi-Fi (\code{WiFi.setSleep(false)}) để giảm trễ. Khung truyền là văn bản ASCII, dễ gỡ lỗi:
 \begin{center}\small
@@ -272,7 +274,7 @@ Thuận & khác, mất tay & Ẩn con trỏ, nhả mọi nút giữ \\
 \section{Kiểm thử và phân tích số liệu}\label{sec:verify}
 \subsection{Kiểm thử tự động}
 \begin{itemize}
-  \item \code{tests/test\_hands\_logic.py}: 46 kiểm tra trên bàn tay giả dựng bằng toán, gồm phân loại cử chỉ, tư thế giao diện, phân vai khi nhãn bị ngược, tự hiệu chuẩn, bộ lọc One-Euro, neo điểm tác động. Kết quả: 46/46 đạt.
+  \item \code{tests/test\_hands\_logic.py}: 55 kiểm tra trên bàn tay giả dựng bằng toán, gồm phân loại cử chỉ, tư thế giao diện, phân vai khi nhãn bị ngược, tự hiệu chuẩn, bộ lọc One-Euro, neo điểm tác động. Kết quả: 55/55 đạt.
   \item \code{tests/handcursor\_test.html}: 49 kiểm tra trong trình duyệt cho dwell click, click hai ngón, nắm tương đối thanh trượt, kéo cần lái, nút giữ, tự nhả khi mất tay, thẻ thông số. Chạy bằng Chrome không giao diện (cửa sổ $1280\times900$) ngày 12/11/2026: 49/49 đạt. Cửa sổ quá thấp (dưới khoảng 500 px) làm một kiểm tra vị trí con trỏ báo lỗi giả vì con trỏ bị kẹp vào mép cửa sổ.
 \end{itemize}
 Các kiểm tra tự động dùng bàn tay mô phỏng, nên con số của chúng chỉ mô tả thuật toán trên dữ liệu lý tưởng. Với nhiễu 2 px (200 lần chạy có hạt giống) độ lệch chuẩn của con trỏ giảm từ 0,0047 xuống 0,0016 (giảm 65,5\,\%). Với ngón trỏ bị lệch $(25,-15)$ px khi duỗi ngón giữa, điểm tác động lệch 0,0126 (đơn vị chuẩn hóa) so với 0,0770 của đầu ngón, giảm 83,6\,\%; phần dư là 4,6 px trong 29,2 px. Vì tư thế click chỉ được chấp nhận sau 3 khung, điểm tác động có thể lệch thoáng qua tới 15,6 px (khoảng 0,1 s) trước khi bù.
@@ -349,14 +351,53 @@ Chéo tiến phải (v2) & 71 & (+0,313; -0,237; 0) & (+0,316; -0,243; -0,002) &
   \label{fig:rtt}
 \end{figure}
 
+\subsection{Phiên thứ hai: vòng thị giác khi có tay, độ trễ đầu cuối và con trỏ gần mép khung}
+Sau các lần chạy trên, chúng tôi ghi thêm bốn phiên server bằng bộ ghi log từng lần chạy (\texttt{web/runlog.py}): mỗi khung camera một dòng, cộng bản ghi 20\,Hz của bốn bánh khi robot được nối (dữ liệu ở \texttt{docs/data/v2/session2/}, bảng~\ref{tab:sess2}). Phiên A và B chạy mã trước các thay đổi mô tả dưới đây (thu hình MJPG $640\times480$, con trỏ ánh xạ 1:1 theo đầu ngón tay); phiên C và D chạy sau khi nâng thu hình lên $1280\times720$ (nhận diện tay vẫn trên bản $640$ px) và sau khi con trỏ được cho chạy nhanh hơn đầu ngón gần mép khung (C ánh xạ tuyến tính từng đoạn, D ánh xạ mượt ở mục~\ref{sec:edge}). A và B có robot nối; C và D chỉ thử con trỏ. A là lần chạy đầu tiên sau khi sửa lỗi một bánh, và D vẫn đang chạy lúc chép log nên D là một bản chụp. Một người vận hành tham gia cả bốn phiên, các phiên khác nhau về việc người đó làm, số tab trình duyệt mở và độ dài, nên đây không phải một so sánh có kiểm soát.
+
+\begin{table}[H]
+\caption{Các phiên server ghi bằng bộ ghi log từng lần chạy. Thời gian suy luận điểm mốc trung bình (ms) tách theo số tay trong khung; fps là số khung AI mỗi giây trong cả phiên.}
+\label{tab:sess2}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{llcrrrrr}
+\toprule
+Phiên & Camera & Con trỏ & Thời gian (s) & fps & 0 tay & 1 tay & 2 tay \\
+\midrule
+A & 640$\times$480 & 1:1 & 186 & 25,5 & 27,7 & 45,5 & 43,3 \\
+B & 640$\times$480 & 1:1 & 76 & 21,9 & 31,3 & 50,1\textsuperscript{a} & 47,5 \\
+C & 1280$\times$720 & gãy khúc & 363 & 18,0 & 30,7 & 55,5 & 48,3 \\
+D & 1280$\times$720 & mượt & 214 & 21,9 & 28,9 & 52,4 & 47,2 \\
+\bottomrule
+\multicolumn{8}{l}{\footnotesize\textsuperscript{a}Chỉ có 46 khung có đúng một tay.}\\
+\end{tabular}
+\end{table}
+
+\emph{Vòng thị giác khi có tay.} Khi chưa có tay trong khung, suy luận trung bình 27,7--31,3 ms; một tay 45,5--55,5 ms, hai tay 43,3--48,3 ms (Hình~\ref{fig:sess2}a). Tốc độ khung cả phiên là 18,0--25,5 khung/giây, dưới mục tiêu 25 fps và dưới 29,9 fps của phép đo riêng lẻ ở trên (chỉ đo thu hình và nhận diện, không có tay); server còn mã hóa và gửi mọi khung và chạy vòng điều khiển, và nguyên nhân của chênh lệch chưa được tách ra. Khung một tay không rẻ hơn khung hai tay (lý do có thể là bộ dò tiếp tục tìm bàn tay thứ hai còn thiếu, chưa kiểm). Nâng thu hình lên $1280\times720$ không làm đổi chi phí khi không có tay (27,7--31,3 ms ở cả bốn phiên); với một tay, trung bình ở C và D cao hơn A (55,5 và 52,4 so với 45,5 ms), nhưng các phiên chưa đủ so sánh được để gán cho độ phân giải.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{fig_sess2_vi.pdf}
+  \caption{(a) Thời gian suy luận điểm mốc theo phiên và số tay trong khung (hộp: tứ phân vị; râu không tính điểm ngoại lai). (b) Độ trễ từ khung camera mà bộ lọc cử chỉ chốt một cử chỉ chuyển động đến khi bánh chịu tải nhiều nhất đạt 50\,\% mục tiêu mới, phiên A (15 lần; nét đứt: trung vị).}
+  \label{fig:sess2}
+\end{figure}
+
+\emph{Độ trễ đầu cuối (phiên A).} Với 15 cử chỉ chuyển động đã chốt, trung vị thời gian từ khung camera mà bộ lọc cử chỉ chốt đến khi bánh chịu tải nhiều nhất đạt 50\,\% mục tiêu mới là 427 ms (321--496 ms, Hình~\ref{fig:sess2}b); lệnh rời laptop sau khung đó 37 ms (trung vị). Bản thân bộ lọc cần $4$ khung liên tiếp, tức khoảng ba khoảng khung ($120$--$140$ ms ở các tốc độ khung này) trước khung chốt, phần này không được tính. Độ lớn mục tiêu trung vị là 0,81 tốc độ tối đa; với giới hạn gia tốc của máy chủ $2{,}0\,\mathrm{s^{-1}}$, một nửa của nó mất khoảng $0{,}2\,\mathrm{s}$, nên một phần lớn độ trễ là đoạn tăng tốc có chủ ý. Giá trị này dài hơn $257$--$260\,\mathrm{ms}$ ở mục~5.2, vốn tính từ giá trị cử chỉ ghi trong log điều khiển thay vì từ khung camera (muộn hơn khoảng 37 ms) và dùng các mục tiêu có độ lớn khác; 15 lần ở đây quá ít và quá đồng đều để tách các nguyên nhân. Phiên B chỉ có một lần (319 ms, mục tiêu 0,5).
+
+\emph{Bám tốc độ và đường truyền.} Với cùng quy tắc như mục~5.2, sai số trung bình là 1,3\,\% (thủ công) và 1,5\,\% (cử chỉ) tốc độ tối đa ở A, và 0,9\,\% ở B (chỉ cử chỉ; $12$ mẫu thủ công quá ít để báo cáo), với phân vị 95 là 4,3, 5,0 và 4,2\,\%. Ở A, độ rộng xung chạm trần $0{,}95$ trong 8,0\,\% số mẫu thủ công và 3,8\,\% số mẫu cử chỉ, so với 0,0\,\% ở B: ở tốc độ cao hơn của A bộ điều khiển hết dư địa điện áp nên không đạt được tốc độ lệnh, có thể làm méo chuyển động chéo nếu các bánh bão hòa không đều (chưa đo). Độ trễ khứ hồi UDP có trung vị 6,4 và 7,9 ms (phân vị 95 là 23,9 và 17,3 ms; lớn nhất 104 và 47 ms), phù hợp với các lần chạy trước.
+
+\emph{Con trỏ gần mép khung.} Ánh xạ ở mục~\ref{sec:edge} được đưa vào sau khi người vận hành báo rằng tay giao diện bị mất mỗi khi đầu ngón phải tới sát viền khung để chạm thanh tốc độ ở góc màn hình, rồi báo rằng con trỏ chạy trước đầu ngón khi đoạn kéo giãn bắt đầu đột ngột. Log chỉ cho cái nhìn gián tiếp vì không lưu vị trí đầu ngón thô: tỉ lệ khung có tay giao diện mà con trỏ cách mép màn hình dưới $2\,\%$ là 2,3\,\% ở A và 1,4\,\% ở B (ánh xạ 1:1), và 8,2\,\% ở C, 4,6\,\% ở D (kéo giãn); số đoạn tay giao diện dài hơn $0{,}3\,\mathrm{s}$ kết thúc khi con trỏ ở mép, dấu hiệu mất tay ở đó, là 1/6 ở A, 1/3 ở B, 0/15 ở C và 1/9 ở D. Người vận hành cũng cần góc nhiều hơn ở C và D vì nhiệm vụ là chạm tới đó, nên các số này chỉ cho thấy con trỏ tới được mép màn hình với ánh xạ kéo giãn, không chứng minh mất tay giảm; số đếm còn nhỏ. Độ vượt trước của con trỏ so với đầu ngón gần mép (tối đa $6\,\%$ bề rộng khung theo thiết kế) chưa được đo so với vị trí đầu ngón và dựa trên báo cáo của người vận hành.
+
 %====================================================================
 \section{Giới hạn và cách tái lập}
-\textbf{Giới hạn.} Số liệu từ một robot, một sàn nhà, một người vận hành. Chưa có khảo sát người dùng. Số đo con trỏ trên tay thật (rung, lệch khi click) chỉ từ một người và 12 lần click, chưa đo tỉ lệ bấm trúng; cơ chế neo FREEZE\_BACK không cho kết quả tốt hơn trong các lần đo này. Chưa có so sánh bộ điều khiển với PID thuần hay vòng hở. Chưa đo độ trễ từ camera đến bánh xe. Robot không có cảm biến vật cản.
+\textbf{Giới hạn.} Số liệu từ một robot, một sàn nhà, một người vận hành. Chưa có khảo sát người dùng. Số đo con trỏ trên tay thật (rung, lệch khi click) chỉ từ một người và 12 lần click, chưa đo tỉ lệ bấm trúng; cơ chế neo FREEZE\_BACK không cho kết quả tốt hơn trong các lần đo này. Chưa có so sánh bộ điều khiển với PID thuần hay vòng hở. Độ trễ đầu cuối chỉ đo ở một phiên (15 lần), và tác dụng của ánh xạ gần mép lên việc mất tay chưa được đo so với vị trí đầu ngón thật. Robot không có cảm biến vật cản.
 
 \textbf{Tái lập số liệu và hình.} Từ thư mục gốc dự án:
 \begin{center}\small
 \code{.venv/bin/python reports/make\_figures.py}\quad (sinh hình và \code{reports/figures/stats.json})\\
 \code{python tests/analyze\_drive\_log.py docs/data/v2/drive\_twohand.csv}\\
+\code{.venv/bin/python reports/session2.py}\quad (phiên thứ hai: \code{stats\_session2.json} và hình)\\
+\code{python tests/analyze\_run.py logs/ai\_<giờ>.csv logs/drive\_<giờ>.csv}\\
 \code{python tests/test\_hands\_logic.py}\quad \code{python tests/camera\_fps\_test.py}
 \end{center}
 \end{document}

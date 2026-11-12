@@ -303,7 +303,7 @@
     'opt-dwell': () => 'Giữ yên con trỏ trên nút một lúc thì tự click, vòng tròn đầy dần.',
     'dwell-ms': () => `Giữ yên ${(cfg.dwellMs / 1000).toFixed(1)} giây thì click. Giữ yên để nắm thanh rồi di ngón tay.`,
     'opt-two': () => 'Duỗi thêm ngón giữa (cùng ngón trỏ) để click nhanh hoặc kéo.',
-    'region': () => `Vùng tay hoạt động ${Math.round(ui.region * 100)}% khung camera. 100% là con trỏ đúng đầu ngón tay. Giữ yên để nắm thanh rồi di ngón tay.`,
+    'region': () => `Vùng tay hoạt động ${Math.round(ui.region * 100)}% khung camera. 100% là con trỏ đúng đầu ngón tay (sát mép khung con trỏ chạy nhanh hơn tay để không phải đưa tay ra ngoài khung). Giữ yên để nắm thanh rồi di ngón tay.`,
     'settings-close': () => 'Đóng bảng cài đặt.',
   };
   // Hình camera phủ cửa sổ theo object-fit (cover trên máy tính): đổi tọa độ khung camera (0..1)

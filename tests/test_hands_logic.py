@@ -154,9 +154,9 @@ check(f"lọc mượt: độ rung giảm (không lọc {sd(raw_xs):.4f} -> có l
 c = Cursor(region=0.65)
 xs = []
 for i in range(60):
-    o = c.update(make_hand({"index"}, tip_dx=min(i, 30) * 6), W, H, i / 30)  # tay đi 180 px trong 1 s rồi dừng
+    o = c.update(make_hand({"index"}, tip_dx=min(i, 30) * 4), W, H, i / 30)  # tay đi 120 px trong 1 s rồi dừng (vẫn ở giữa khung)
     xs.append(o["x"])
-target = (make_hand({"index"}, tip_dx=180)[8][0] / W - 0.5) / 0.65 + 0.5
+target = (Cursor._stretch(make_hand({"index"}, tip_dx=120)[8][0] / W) - 0.5) / 0.65 + 0.5
 check(f"tay đi nhanh rồi dừng: sau 0.2 s con trỏ cách đích {abs(xs[36] - target) * W * 0.65:.1f} px", abs(xs[36] - target) * W * 0.65 < 3)
 
 # mặc định (region 1.0): con trỏ trùng đúng đầu ngón trỏ trong khung camera
@@ -204,6 +204,41 @@ check("1 khung 'click' thoáng qua không làm bấm nhầm", all(o["pose"] != "
 # OneEuro cơ bản
 f = OneEuro()
 check("OneEuro: giá trị đầu giữ nguyên", f(0.3, 0.0) == 0.3)
+
+# ---- Gần mép khung: con trỏ chạy nhanh hơn ngón tay, và giữ lại khi tay mất ngay ở mép ----
+S = Cursor._stretch
+check("kéo giãn: ở giữa khung giữ nguyên (trùng đầu ngón)", all(S(f) == f for f in (0.2, 0.35, 0.5, 0.65, 0.8)))
+check("kéo giãn: đầu ngón cách mép 8% khung thì con trỏ chạm mép",
+      abs(S(1 - Cursor.EDGE_MARGIN) - 1.0) < 1e-9 and abs(S(Cursor.EDGE_MARGIN) - 0.0) < 1e-9)
+fs = [i / 200 for i in range(201)]
+check("kéo giãn: đơn điệu, đối xứng, liên tục", all(S(a) <= S(b) for a, b in zip(fs, fs[1:]))
+      and all(abs(S(f) + S(1 - f) - 1) < 1e-9 for f in fs)
+      and abs(S(0.8 + 1e-9) - S(0.8)) < 1e-6)
+base = make_hand({"index"})[8][0]
+c = Cursor()
+o = run(c, [make_hand({"index"}, tip_dx=(1 - Cursor.EDGE_MARGIN) * W - base) for _ in range(30)])[-1]
+check(f"đầu ngón cách mép phải 8% khung: con trỏ x = {o['x']:.3f} (chạm mép)", o["x"] > 0.995)
+check("thanh trượt ở góc màn hình với tới được mà tay không ra khỏi khung", o["x"] > 0.995 and (1 - Cursor.EDGE_MARGIN) * W < W)
+
+# đi vào dải kéo giãn: độ trễ bộ lọc nhân theo hệ số kéo giãn nên ngưỡng rộng hơn vùng giữa
+c = Cursor(region=0.65)
+xs = []
+for i in range(60):
+    xs.append(c.update(make_hand({"index"}, tip_dx=min(i, 30) * 6), W, H, i / 30)["x"])
+target = (Cursor._stretch(make_hand({"index"}, tip_dx=180)[8][0] / W) - 0.5) / 0.65 + 0.5
+check(f"tay đi nhanh vào dải gần mép rồi dừng: sau 0.2 s con trỏ cách đích {abs(xs[36] - target) * W * 0.65:.1f} px",
+      abs(xs[36] - target) * W * 0.65 < 6)
+
+edge_hand = lambda: make_hand({"index"}, tip_dx=0.95 * W - base)
+c = Cursor()
+run(c, [edge_hand() for _ in range(15)])
+s_edge = c.update(None, W, H, 15 / 30 + 0.7)  # 0.7 s sau khi mất tay sát mép
+check("mất tay sát mép khung: giữ con trỏ và tư thế 0.7 s", s_edge["pose"] == "point" and s_edge["x"] > 0.99)
+s_gone = c.update(None, W, H, 15 / 30 + 1.2)
+check("mất tay sát mép quá 1 s thì ẩn con trỏ", s_gone["pose"] == "none")
+c = Cursor()
+run(c, [make_hand({"index"}) for _ in range(15)])
+check("mất tay ở giữa khung: chỉ ân hạn 0.3 s như cũ", c.update(None, W, H, 15 / 30 + 0.7)["pose"] == "none")
 
 print(f"\n{'TẤT CẢ ĐỀU ĐẠT' if check.failed == 0 else str(check.failed) + ' BÀI KHÔNG ĐẠT'}")
 sys.exit(1 if check.failed else 0)

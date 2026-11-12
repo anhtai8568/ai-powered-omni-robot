@@ -64,6 +64,12 @@ class OneEuro:
 
 class Cursor:
     FREEZE_BACK = 0.2   # giây: khi bắt đầu click, lấy vị trí của trước đó chừng này (trước khi ngón giữa làm lệch đầu ngón trỏ)
+    # Gần mép khung camera con trỏ chạy nhanh hơn ngón tay: chạm góc màn hình khi đầu ngón còn cách mép khung
+    # EDGE_MARGIN (tay không phải ra ngoài khung nên không bị mất). Ở giữa (|lệch| <= EDGE_CORE) vẫn trùng đầu ngón.
+    EDGE_CORE = 0.30    # nửa bề rộng vùng giữa khung (theo tỉ lệ khung) mà con trỏ trùng đúng đầu ngón tay
+    EDGE_MARGIN = 0.08  # đầu ngón cách mép khung chừng này là con trỏ đã chạm mép màn hình
+    EDGE_ZONE = 0.12    # đầu ngón trong dải này sát mép khung: mất tay ở đó thì giữ con trỏ lâu hơn (tay đang ra khỏi khung)
+    EDGE_GRACE = 1.0    # giây giữ con trỏ khi mất tay sát mép khung (mất ở chỗ khác thì chỉ lost_grace)
     OFFSET_TAU = 0.15   # giây: sau khi nhả click, độ lệch giữ lại tan dần để điểm tác động không giật
 
     def __init__(self, region=1.0, cy=0.5, debounce=3, lost_grace=0.3):
@@ -84,21 +90,34 @@ class Cursor:
         self._off = (0.0, 0.0)
         self._last_t = None
         self._seen_t = -1e9
+        self._near_edge = False
         self._fx.reset()
         self._fy.reset()
 
+    @classmethod
+    def _stretch(cls, f):
+        """Toạ độ khung f (0..1) -> toạ độ đã kéo giãn gần mép: giữ nguyên ở giữa, tăng tốc ở dải ngoài."""
+        d = f - 0.5
+        a, b = cls.EDGE_CORE, 0.5 - cls.EDGE_MARGIN
+        if abs(d) <= a:
+            return f
+        return 0.5 + math.copysign(min(0.5, a + (abs(d) - a) * (0.5 - a) / (b - a)), d)
+
     def _map(self, p, w, h):
-        u = (p[0] / w - 0.5) / self.region + 0.5
-        v = (p[1] / h - self.cy) / self.region + 0.5
+        u = (self._stretch(p[0] / w) - 0.5) / self.region + 0.5
+        v = (self._stretch(p[1] / h) - self.cy) / self.region + 0.5
         return min(1.0, max(0.0, u)), min(1.0, max(0.0, v))
 
     def update(self, pts, w, h, t):
         """pts: 21 điểm của tay thuận (hoặc None), w/h: kích thước ảnh, t: thời gian (giây)."""
         if pts is None:
-            if self.pose != "none" and t - self._seen_t > self.lost_grace:
+            grace = self.EDGE_GRACE if self._near_edge else self.lost_grace
+            if self.pose != "none" and t - self._seen_t > grace:
                 self.reset()
             return self.state()
         self._seen_t = t
+        tx, ty = pts[INDEX_TIP][0] / w, pts[INDEX_TIP][1] / h
+        self._near_edge = min(tx, 1 - tx, ty, 1 - ty) < self.EDGE_ZONE
 
         raw = ui_pose(pts)
         if raw == self._cand:

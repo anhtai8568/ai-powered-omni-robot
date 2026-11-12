@@ -112,6 +112,14 @@ Chế độ **Cử chỉ tay** mới chia vai theo bên.
 Nút **Dừng khẩn cấp** (phím Space) luôn dừng ngay. ESP32 tự dừng nếu mất lệnh quá 0.3 s.
 Giơ tay trước camera 2 giây khi chưa mở dashboard thì trình duyệt tự mở (tắt: `HAND_OPEN=0`).
 
+**Chạm góc màn hình:** con trỏ trùng đầu ngón tay ở giữa khung camera, còn sát mép khung (đầu ngón cách mép dưới 20% khung)
+nó chạy nhanh hơn tay, nên chạm được góc màn hình (ví dụ thanh tốc độ) khi đầu ngón còn cách mép khung khoảng 8%, tay không
+phải ra ngoài khung nên không bị mất. Nếu tay vẫn mất đúng ở mép thì con trỏ được giữ lại tối đa 1 giây.
+
+**Độ nét:** hình lấy 1280x720 (camera trên máy này hỗ trợ MJPG 30 fps ở độ phân giải đó), AI vẫn nhận diện trên bản thu về 640 px.
+Camera không có độ phân giải này thì đặt `CAMERA_WIDTH` và `CAMERA_HEIGHT` (ví dụ 640 và 480), hoặc xem chế độ camera hỗ trợ bằng
+`v4l2-ctl --list-formats-ext -d /dev/video0`.
+
 ## Nhật ký mỗi lần chạy
 
 Chạy `python web/server.py` là tự ghi, không cần cờ gì. Thư mục `logs/` (bị gitignore) có, cho mỗi lần chạy:

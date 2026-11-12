@@ -37,3 +37,14 @@ firmware/.pio/
 
 # Log chạy robot
 logs/
+
+# LaTeX build artifacts (reports/)
+reports/**/*.aux
+reports/**/*.log
+reports/**/*.out
+reports/**/*.toc
+reports/**/*.fls
+reports/**/*.fdb_latexmk
+reports/**/*.synctex.gz
+reports/**/*.bbl
+reports/**/*.blg

@@ -112,6 +112,19 @@ Chế độ **Cử chỉ tay** mới chia vai theo bên.
 Nút **Dừng khẩn cấp** (phím Space) luôn dừng ngay. ESP32 tự dừng nếu mất lệnh quá 0.3 s.
 Giơ tay trước camera 2 giây khi chưa mở dashboard thì trình duyệt tự mở (tắt: `HAND_OPEN=0`).
 
+## Nhật ký mỗi lần chạy
+
+Chạy `python web/server.py` là tự ghi, không cần cờ gì. Thư mục `logs/` (bị gitignore) có, cho mỗi lần chạy:
+
+| Tệp | Nội dung |
+|---|---|
+| `run_<giờ>.log` | **Toàn bộ chữ server in ra** (kể cả cảnh báo của MediaPipe, OpenCV, uvicorn), mỗi dòng có giờ. Có phần đầu (mã git và có sửa chưa commit hay không, máy, phiên bản thư viện), các sự kiện (đổi chế độ, dừng khẩn cấp, đổi tốc độ, robot nối hoặc mất, camera, dashboard mở hoặc đóng), một dòng thống kê mỗi 5 giây (fps, thời gian suy luận, RTT, số tay) và tóm tắt cuối phiên |
+| `ai_<giờ>.csv` | Mỗi khung camera một dòng: giờ, thời gian suy luận, số tay, tư thế con trỏ, cử chỉ đã lọc, lệnh cử chỉ, vị trí con trỏ |
+| `drive_<giờ>.csv` | 20 Hz, chỉ khi robot nối: lệnh gửi đi, RTT, tốc độ đặt, tốc độ đo (encoder) và PWM của 4 bánh |
+
+`ai_*.csv` và `drive_*.csv` dùng chung đồng hồ `time.time()` nên ghép được để tính độ trễ từ khung camera đến bánh xe. Đọc nhanh:
+`tail -f logs/run_*.log` khi đang chạy, hoặc `python tests/analyze_drive_log.py logs/drive_<giờ>.csv` sau khi chạy.
+
 ## Công cụ kiểm tra
 
 Kê robot lên (bánh không chạm đất) trước khi chạy motor.

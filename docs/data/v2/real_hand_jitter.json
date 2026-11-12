@@ -1,0 +1,4 @@
+{"source": "tests/real_hand_eval.py part A, 2026-11-12 16:22, terminal output copied by the user (not saved by the script)",
+ "frames": 209, "hold_seconds": 8,
+ "raw_sd_px": {"x": 1.15, "y": 1.95}, "filtered_sd_px": {"x": 0.98, "y": 1.90},
+ "raw_sd_total_px": 2.26, "filtered_sd_total_px": 2.14, "reduction": 0.05}

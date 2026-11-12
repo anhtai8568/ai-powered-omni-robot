@@ -55,7 +55,8 @@ Quay lại bản này: `git checkout v2.0`.
 | Tài liệu kỹ thuật và thiết kế hệ thống | `reports/technical_document/report_en.tex`, `report_vi.tex` |
 
 Mọi hình và con số lấy từ dữ liệu trong `docs/data/` bằng `python reports/make_figures.py`
-(hình trong `reports/figures/`, số trong `reports/figures/stats.json`). Dựng lại PDF cần TeX Live
+(hình trong `reports/figures/`, số trong `reports/figures/stats.json`).
+Phiên chạy thứ hai (bốn phiên server có tay thật, log trong `docs/data/v2/session2/`) do `python reports/session2.py` xử lý, ra `reports/figures/stats_session2.json` và hình `fig_sess2_*`; từng phiên đọc bằng `python tests/analyze_run.py logs/ai_<giờ>.csv logs/drive_<giờ>.csv`. Dựng lại PDF cần TeX Live
 (`latexmk -pdf paper_en.tex`) hoặc Tectonic; bản tiếng Việt nên dùng `xelatex`. Tác giả: Tai Nguyen Anh; cơ quan và email trong bài báo (mẫu IEEE) còn để trống, cần điền trước khi nộp.
 
 

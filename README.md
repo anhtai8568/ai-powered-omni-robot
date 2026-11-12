@@ -56,7 +56,7 @@ Quay lại bản này: `git checkout v2.0`.
 
 Mọi hình và con số lấy từ dữ liệu trong `docs/data/` bằng `python reports/make_figures.py`
 (hình trong `reports/figures/`, số trong `reports/figures/stats.json`). Dựng lại PDF cần TeX Live
-(`latexmk -pdf paper_en.tex`) hoặc Tectonic; bản tiếng Việt nên dùng `xelatex`. Tên tác giả trong bài đang để trống.
+(`latexmk -pdf paper_en.tex`) hoặc Tectonic; bản tiếng Việt nên dùng `xelatex`. Tác giả: Tai Nguyen Anh; cơ quan và email trong bài báo (mẫu IEEE) còn để trống, cần điền trước khi nộp.
 
 
 ## Cài đặt

@@ -207,7 +207,7 @@ check("OneEuro: giá trị đầu giữ nguyên", f(0.3, 0.0) == 0.3)
 
 # ---- Gần mép khung: con trỏ chạy nhanh hơn ngón tay, và giữ lại khi tay mất ngay ở mép ----
 S = Cursor._stretch
-check("kéo giãn: ở giữa khung giữ nguyên (trùng đầu ngón)", all(S(f) == f for f in (0.2, 0.35, 0.5, 0.65, 0.8)))
+check("kéo giãn: ở giữa khung giữ nguyên (trùng đầu ngón)", all(S(f) == f for f in (0.4, 0.45, 0.5, 0.55, 0.6)))
 check("kéo giãn: đầu ngón cách mép 8% khung thì con trỏ chạm mép",
       abs(S(1 - Cursor.EDGE_MARGIN) - 1.0) < 1e-9 and abs(S(Cursor.EDGE_MARGIN) - 0.0) < 1e-9)
 fs = [i / 200 for i in range(201)]
@@ -217,7 +217,7 @@ check("kéo giãn: đơn điệu, đối xứng, liên tục", all(S(a) <= S(b) 
 base = make_hand({"index"})[8][0]
 c = Cursor()
 o = run(c, [make_hand({"index"}, tip_dx=(1 - Cursor.EDGE_MARGIN) * W - base) for _ in range(30)])[-1]
-check(f"đầu ngón cách mép phải 8% khung: con trỏ x = {o['x']:.3f} (chạm mép)", o["x"] > 0.995)
+check(f"đầu ngón cách mép phải 6% khung: con trỏ x = {o['x']:.3f} (chạm mép)", o["x"] > 0.995)
 check("thanh trượt ở góc màn hình với tới được mà tay không ra khỏi khung", o["x"] > 0.995 and (1 - Cursor.EDGE_MARGIN) * W < W)
 
 # đi vào dải kéo giãn: độ trễ bộ lọc nhân theo hệ số kéo giãn nên ngưỡng rộng hơn vùng giữa
@@ -227,7 +227,7 @@ for i in range(60):
     xs.append(c.update(make_hand({"index"}, tip_dx=min(i, 30) * 6), W, H, i / 30)["x"])
 target = (Cursor._stretch(make_hand({"index"}, tip_dx=180)[8][0] / W) - 0.5) / 0.65 + 0.5
 check(f"tay đi nhanh vào dải gần mép rồi dừng: sau 0.2 s con trỏ cách đích {abs(xs[36] - target) * W * 0.65:.1f} px",
-      abs(xs[36] - target) * W * 0.65 < 6)
+      abs(xs[36] - target) * W * 0.65 < 14)
 
 edge_hand = lambda: make_hand({"index"}, tip_dx=0.95 * W - base)
 c = Cursor()

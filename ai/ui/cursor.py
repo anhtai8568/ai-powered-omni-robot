@@ -66,8 +66,8 @@ class Cursor:
     FREEZE_BACK = 0.2   # giây: khi bắt đầu click, lấy vị trí của trước đó chừng này (trước khi ngón giữa làm lệch đầu ngón trỏ)
     # Gần mép khung camera con trỏ chạy nhanh hơn ngón tay: chạm góc màn hình khi đầu ngón còn cách mép khung
     # EDGE_MARGIN (tay không phải ra ngoài khung nên không bị mất). Ở giữa (|lệch| <= EDGE_CORE) vẫn trùng đầu ngón.
-    EDGE_CORE = 0.30    # nửa bề rộng vùng giữa khung (theo tỉ lệ khung) mà con trỏ trùng đúng đầu ngón tay
-    EDGE_MARGIN = 0.08  # đầu ngón cách mép khung chừng này là con trỏ đã chạm mép màn hình
+    EDGE_CORE = 0.10    # nửa bề rộng vùng giữa khung (theo tỉ lệ khung) mà con trỏ trùng đúng đầu ngón tay; ngoài đó lệch tăng dần
+    EDGE_MARGIN = 0.06  # đầu ngón cách mép khung chừng này là con trỏ đã chạm mép màn hình
     EDGE_ZONE = 0.12    # đầu ngón trong dải này sát mép khung: mất tay ở đó thì giữ con trỏ lâu hơn (tay đang ra khỏi khung)
     EDGE_GRACE = 1.0    # giây giữ con trỏ khi mất tay sát mép khung (mất ở chỗ khác thì chỉ lost_grace)
     OFFSET_TAU = 0.15   # giây: sau khi nhả click, độ lệch giữ lại tan dần để điểm tác động không giật
@@ -101,7 +101,10 @@ class Cursor:
         a, b = cls.EDGE_CORE, 0.5 - cls.EDGE_MARGIN
         if abs(d) <= a:
             return f
-        return 0.5 + math.copysign(min(0.5, a + (abs(d) - a) * (0.5 - a) / (b - a)), d)
+        # parabol: tốc độ bằng tay ở rìa vùng giữa rồi tăng dần (không có điểm gãy), vừa chạm 0.5 tại |d| = b
+        k = (0.5 - b) / (b - a) ** 2
+        e = abs(d) - a
+        return 0.5 + math.copysign(min(0.5, abs(d) + k * e * e), d)
 
     def _map(self, p, w, h):
         u = (self._stretch(p[0] / w) - 0.5) / self.region + 0.5

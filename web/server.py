@@ -29,7 +29,7 @@ sys.path.insert(0, str(BASE.parent))  # để import được ai/ và communicat
 from ai.camera import Camera  # noqa: E402
 from ai.drive.command import GestureFilter, to_command  # noqa: E402
 from ai.drive.gestures import classify  # noqa: E402
-from ai.hands import HandTracker, RoleAssigner, draw_hand, split_roles  # noqa: E402
+from ai.hands import Hand, HandTracker, RoleAssigner, draw_hand, split_roles  # noqa: E402
 from ai.ui.cursor import Cursor  # noqa: E402
 from communication.robot_link import RobotLink  # noqa: E402
 from web.runlog import RunLog  # noqa: E402
@@ -46,13 +46,18 @@ if __name__ == "__main__":
 HOST = os.environ.get("HOST", "127.0.0.1")
 PORT = int(os.environ.get("PORT", "8000"))
 CAMERA_INDEX = int(os.environ.get("CAMERA_INDEX", "0"))
+# Hình hiển thị lấy 1280x720 cho nét (640x480 bị phóng ~2 lần lên cửa sổ nên mờ); AI vẫn chạy trên bản thu về
+# DETECT_WIDTH px để ngưỡng và tốc độ không đổi. Camera không có chế độ này thì OpenCV tự chọn chế độ gần nhất.
+CAMERA_WIDTH = int(os.environ.get("CAMERA_WIDTH", "1280"))
+CAMERA_HEIGHT = int(os.environ.get("CAMERA_HEIGHT", "720"))
+DETECT_WIDTH = 640
 HAND_OPEN = os.environ.get("HAND_OPEN", "1") != "0"
 OPEN_HOLD = 2.0       # giây giơ tay liên tục thì tự mở trình duyệt
 OPEN_COOLDOWN = 30.0  # giây tối thiểu giữa hai lần tự mở
 
 CONTROL_HZ = 20       # tần số vòng điều khiển gửi lệnh ra robot
 CMD_TIMEOUT = 0.4     # giây; quá thời gian này không có lệnh mới -> dừng robot
-JPEG_QUALITY = 70
+JPEG_QUALITY = 85
 MAX_ACCEL = 2.0       # tăng tốc tối đa, đơn vị lệnh/giây (0 -> 1 mất 0.5 s)
 MAX_DECEL = 4.0       # giảm tốc tối đa (1 -> 0 mất 0.25 s), nhanh hơn tăng tốc để dừng kịp
 
@@ -106,7 +111,7 @@ class State:
 
 
 state = State()
-cam = Camera(index=CAMERA_INDEX, width=640, height=480, fps=30, mirror=True)
+cam = Camera(index=CAMERA_INDEX, width=CAMERA_WIDTH, height=CAMERA_HEIGHT, fps=30, mirror=True)
 tracker = HandTracker()
 roles = RoleAssigner()
 cursor = Cursor()
@@ -165,8 +170,14 @@ def process_frame(frame, t_frame=None):
     Nếu AI bị treo, gesture_ts không được cập nhật và control_loop tự dừng robot sau CMD_TIMEOUT.
     """
     t_start = time.perf_counter()
-    h, w = frame.shape[:2]
-    detected = tracker.detect(frame)
+    fh, fw = frame.shape[:2]
+    if fw > DETECT_WIDTH:
+        small = cv2.resize(frame, (DETECT_WIDTH, round(fh * DETECT_WIDTH / fw)), interpolation=cv2.INTER_AREA)
+    else:
+        small = frame
+    h, w = small.shape[:2]
+    k = fw / w  # hệ số phóng từ ảnh nhận diện lên ảnh hiển thị
+    detected = tracker.detect(small)
     t_infer = time.perf_counter()
     hands = roles.assign(detected)
     # Thủ công: robot không lái bằng cử chỉ, nên chỉ cần một tay (tay nào cũng là tay giao diện)
@@ -184,10 +195,11 @@ def process_frame(frame, t_frame=None):
                   (time.perf_counter() - t_start) * 1000, len(hands), state.cursor["pose"], state.gesture,
                   state.gesture_cmd, state.cursor)
 
+    scaled = lambda hd: hd if k == 1 else Hand(pts=[(x * k, y * k) for x, y in hd.pts], label=hd.label, side=hd.side)
     if ui_hand:
-        draw_hand(frame, ui_hand, "ui", f"UI {state.cursor['pose']}")
+        draw_hand(frame, scaled(ui_hand), "ui", f"UI {state.cursor['pose']}", k)
     if drive_hand:
-        draw_hand(frame, drive_hand, "drive", f"DRIVE {state.gesture or '-'}")
+        draw_hand(frame, scaled(drive_hand), "drive", f"DRIVE {state.gesture or '-'}", k)
     return frame
 
 

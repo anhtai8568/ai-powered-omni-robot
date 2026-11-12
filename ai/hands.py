@@ -179,15 +179,16 @@ def extended_fingers(pts):
 ROLE_COLORS = {"ui": (255, 190, 0), "drive": (80, 220, 120)}  # BGR
 
 
-def draw_hand(frame, hand, role, label=""):
+def draw_hand(frame, hand, role, label="", k=1.0):
     """Vẽ khung xương một bàn tay lên frame (sửa trực tiếp), màu theo vai trò."""
     color = ROLE_COLORS.get(role, (255, 255, 255))
+    k = max(1.0, k)  # k > 1: khung lớn hơn 640 px, vẽ nét và chữ to lên cho cân
     for a, b in CONNECTIONS:
-        cv2.line(frame, tuple(map(int, hand.pts[a])), tuple(map(int, hand.pts[b])), color, 2)
+        cv2.line(frame, tuple(map(int, hand.pts[a])), tuple(map(int, hand.pts[b])), color, round(2 * k))
     for p in hand.pts:
-        cv2.circle(frame, tuple(map(int, p)), 4, (0, 200, 255), -1)
+        cv2.circle(frame, tuple(map(int, p)), round(4 * k), (0, 200, 255), -1)
     if label:
         x, y = map(int, hand.pts[WRIST])
-        cv2.putText(frame, label, (x - 40, y + 28), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 0), 4)
-        cv2.putText(frame, label, (x - 40, y + 28), cv2.FONT_HERSHEY_SIMPLEX, 0.7, color, 2)
+        cv2.putText(frame, label, (x - round(40 * k), y + round(28 * k)), cv2.FONT_HERSHEY_SIMPLEX, 0.7 * k, (0, 0, 0), round(4 * k))
+        cv2.putText(frame, label, (x - round(40 * k), y + round(28 * k)), cv2.FONT_HERSHEY_SIMPLEX, 0.7 * k, color, round(2 * k))
     return frame

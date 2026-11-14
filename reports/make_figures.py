@@ -279,10 +279,10 @@ def fig_arch(lang):
     ax.text(4.75, 9.6, "HOST (laptop)" if en else "TRẠM HOST (laptop)", ha="center", fontsize=8, fontweight="bold", color="#1b3556")
     ax.text(15.25, 9.6, "EDGE (ESP32 robot)" if en else "BIÊN EDGE (robot ESP32)", ha="center", fontsize=8, fontweight="bold", color="#1d4a27")
     # host
-    box(ax, 0.5, 7.4, 4.1, 1.7, ("Camera (V4L2)\nMJPG 640×480, 30 fps\nmirrored, 2 buffers" if en else
-                                 "Camera (V4L2)\nMJPG 640×480, 30 fps\nlật gương, đệm 2 khung"))
-    box(ax, 4.9, 7.4, 4.1, 1.7, ("MediaPipe\nHandLandmarker\n21 landmarks, 2 hands" if en else
-                                 "MediaPipe\nHandLandmarker\n21 điểm mốc, 2 tay"))
+    box(ax, 0.5, 7.4, 4.1, 1.7, ("Camera (V4L2)\nMJPG 1280×720, 30 fps\nmirrored, 2 buffers" if en else
+                                 "Camera (V4L2)\nMJPG 1280×720, 30 fps\nlật gương, đệm 2 khung"))
+    box(ax, 4.9, 7.4, 4.1, 1.7, ("MediaPipe Hands\non 640-px-wide copy\n21 landmarks, 2 hands" if en else
+                                 "MediaPipe Hands\ntrên bản thu rộng 640 px\n21 điểm mốc, 2 tay"))
     box(ax, 0.5, 5.2, 8.5, 1.5, ("RoleAssigner + split_roles()\nlabel self-calibration, 10-frame vote,\n150 px position stickiness"
                                 if en else "RoleAssigner + split_roles()\ntự hiệu chuẩn nhãn, bỏ phiếu 10 khung,\nbám vị trí 150 px"), fc="#e6eefa")
     box(ax, 0.5, 2.9, 4.1, 1.8, ("Dominant hand: GUI\nOne-Euro filter,\nFREEZE_BACK 0.2 s" if en else

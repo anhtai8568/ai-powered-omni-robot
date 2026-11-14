@@ -1,12 +1,10 @@
-% Research paper, IEEE conference format (IEEEtran).
-% Build:  cd reports/research_paper && latexmk -pdf paper.tex     (or: pdflatex paper.tex, twice)
+% Research paper, Elsevier journal format (elsarticle, two columns).
+% Build:  cd reports/research_paper && tectonic paper_en.tex   (or: pdflatex paper_en.tex, twice)
 % Figures are produced by ../make_figures.py from the logged runs in docs/data/.
-\documentclass[conference]{IEEEtran}
-\IEEEoverridecommandlockouts
+\documentclass[5p,twocolumn]{elsarticle}
 
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
-\usepackage{cite}
 \usepackage{amsmath,amssymb}
 \usepackage{graphicx}
 \usepackage{booktabs}
@@ -23,28 +21,39 @@
 
 \begin{document}
 
+\begin{frontmatter}
+
 \title{A Vision-Based Dual-Mode Hand Gesture Interface for Simultaneous GUI Interaction and Teleoperation of a Four-Wheel Omnidirectional Mobile Robot}
 
-\author{\IEEEauthorblockN{Tai Nguyen Anh}
-\IEEEauthorblockA{{[Department, Institution]}\\
-{[City, Country]}\\
-{[email address]}}}
+\author[a]{Tai Nguyen Anh}
+\author[b]{Raunak Raj}
+\author[c]{Sharma B. S S P M}
 
-\maketitle
+\affiliation[a]{organization={Student, Information Systems, Phenikaa University},
+            city={Hanoi},
+            country={Vietnam}}
+\affiliation[b]{organization={Assistant Professor, Faculty of Engineering and Technology, Parul Institute of Engineering and Technology, Parul University},
+            city={Vadodara},
+            country={India}}
+\affiliation[c]{organization={Associate Professor, Robotics and Automation, Parul Institute of Technology, Parul University},
+            city={Vadodara},
+            country={India}}
 
 \begin{abstract}
 Hand-gesture teleoperation of mobile robots is usually limited to motion commands, so the operator still returns to a mouse or keyboard to change mode, set speed or press the emergency stop. We present a low-cost system in which one laptop webcam serves both purposes at once: the dominant hand drives a virtual cursor over a web dashboard, and the non-dominant hand commands the three planar degrees of freedom $(v_x, v_y, \omega)$ of a four-wheel X-configuration omnidirectional robot. On the laptop, a geometric pipeline on top of MediaPipe hand landmarks assigns hand roles with online correction of the mirrored handedness label and smooths the cursor with a One-Euro filter. On the ESP32 robot controller, four independent $100\,\mathrm{Hz}$ loops combine per-wheel dead-zone feed-forward with a PI controller whose integrator is frozen during acceleration and saturation. We evaluate the system on $13{,}080$ logged control cycles ($2{,}026\,\mathrm{s}$) from three floor runs. The vision loop ran at $29.9$ fps with $18.5\,\mathrm{ms}$ mean hand-landmark inference; the UDP round trip over the robot's own Wi-Fi access point had a median of $6.6$--$8.1\,\mathrm{ms}$ (95th percentile $16$--$26\,\mathrm{ms}$); the mean wheel-speed error under load was $1.5$--$3.2\,\%$ of full scale; and the body motion reconstructed from the encoders deviated from the command by $0.1$--$2.5\,\%$. In four later sessions with real hands the vision loop ran at $18.0$--$25.5$ fps with $45.5$--$55.5$\,ms inference when one hand was in view, and the delay from the camera frame that confirmed a gesture to half wheel speed was $427$\,ms (median of $15$). Two cursor mechanisms that looked effective on a simulated hand, the One-Euro filter and a click-point anchor, gave little or no benefit on a real hand (jitter $-5\,\%$; click shift not reduced; reported as negative results). All results come from one robot and one operator, and no user study was performed.
 \end{abstract}
 
-\begin{IEEEkeywords}
-omnidirectional mobile robot, hand gesture interface, human--robot interaction, teleoperation, One-Euro filter, feed-forward control, ESP32
-\end{IEEEkeywords}
+\begin{keyword}
+omnidirectional mobile robot \sep hand gesture interface \sep human--robot interaction \sep teleoperation \sep One-Euro filter \sep feed-forward control \sep ESP32
+\end{keyword}
+
+\end{frontmatter}
 
 %--------------------------------------------------------------------
 \section{Introduction}
 Omnidirectional mobile robots (OMRs) with omni or mecanum wheels move holonomically: they translate forward, sideways, or diagonally and rotate in place with three independent velocities $(v_x, v_y, \omega)$ \cite{siegwart2011}. This freedom makes teleoperation harder, because the operator must command three coupled quantities while also supervising the robot through a graphical interface.
 
-Contactless interfaces based on a camera and a hand-landmark detector such as MediaPipe Hands \cite{zhang2020} are attractive because they need no wearable hardware. A common design maps one hand to a small set of discrete motion commands. In such a design, tasks that belong to the supervisory interface (switching control mode, adjusting a speed slider, pressing an emergency stop) typically still require a physical mouse or keyboard. Using the index fingertip as a mouse pointer brings its own problems: high-frequency tremor when the hand is held still, and a displacement of the index fingertip when a second finger is extended to click. Both turned out to be small in our real-hand measurements (Section~IV-B).
+Contactless interfaces based on a camera and a hand-landmark detector such as MediaPipe Hands \cite{zhang2020} are attractive because they need no wearable hardware. A common design maps one hand to a small set of discrete motion commands. In such a design, tasks that belong to the supervisory interface (switching control mode, adjusting a speed slider, pressing an emergency stop) typically still require a physical mouse or keyboard. Using the index fingertip as a mouse pointer brings its own problems: high-frequency tremor when the hand is held still, and a displacement of the index fingertip when a second finger is extended to click. Both turned out to be small in our real-hand measurements (Section~\ref{sec:vision}).
 
 On the actuation side, a low-cost ESP32 with L298N bipolar H-bridges has a large dead zone and unequal motors. In our robot the static-friction threshold differed between wheels by a factor of $2.7$ ($5.5\,\%$ to $14.8\,\%$ duty), so equal open-loop duty drives the four wheels at different speeds and the robot yaws when commanded straight.
 
@@ -109,7 +118,7 @@ Because the displayed image is mirrored, the handedness label of MediaPipe is in
 \subsection{Cursor, Click Anchor and Slider Grab}
 The index fingertip position is smoothed with a One-Euro filter \cite{casiez2012} with $f_{\min}=1\,\mathrm{Hz}$ and $\beta=8$ in normalized image units: the cut-off $f_c=f_{\min}+\beta|\dot{x}|$ is low when the hand is still and rises with speed. The UI hand has three poses: \emph{point} (index only; the cursor moves and a dwell of $0.8\,\mathrm{s}$ clicks), \emph{click} (index and middle; a click or a drag) and \emph{idle}. A pose must persist for $3$ frames.
 
-Extending the middle finger can pull the index fingertip away from the intended target (Section~IV-B measures how much). When the pose changes from point to click at time $t$, the filtered point history $H$ gives the anchor
+Extending the middle finger can pull the index fingertip away from the intended target (Section~\ref{sec:vision} measures how much). When the pose changes from point to click at time $t$, the filtered point history $H$ gives the anchor
 \begin{align}
 (x_a,y_a)&=\bigl(x_j,y_j\bigr)\ \text{with}\ j=\arg\max\{t_j:\ t-t_j\ge 0.2\,\mathrm{s}\},\nonumber\\
 (\Delta x,\Delta y)&=(x_a-x(t),\;y_a-y(t)),\label{eq:anchor}
@@ -118,7 +127,7 @@ and the action point used to hit the DOM element is $(a_x,a_y)=\mathrm{clamp}\bi
 
 \textbf{Mapping near the frame edge.}\label{sec:edge} Hand detection fails when the hand is cut by the frame border, so a cursor that coincides with the fingertip cannot reach the corners of the screen. Let $d=f-\tfrac12$ be the fingertip position in the frame ($f\in[0,1]$, per axis), $a=0.10$ the half width of the central zone and $b=0.44$ the distance at which the cursor should reach the screen edge. With $k=(0.5-b)/(b-a)^2$ the stretched coordinate is $s=\tfrac12+\operatorname{sgn}(d)\min\{\tfrac12,\ |d|+k(|d|-a)^2\}$ for $|d|>a$ and $s=f$ otherwise, which keeps the cursor on the fingertip in the middle, grows the lead smoothly without a kink (peak gain $1.35$) and reaches the screen edge when the fingertip is $6\,\%$ of the frame from the border. If the hand is lost while the fingertip is within $12\,\%$ of the border, the cursor and pose are held for $1.0\,\mathrm{s}$ instead of $0.3\,\mathrm{s}$. A first version, with a linear ramp starting at $|d|=0.30$ and peak gain $1.67$, made the cursor visibly run ahead of the fingertip and was replaced by this one. Nine of the $55$ automatic checks cover this mapping.
 
-\subsection{Per-Wheel Speed Control}
+\subsection{Per-Wheel Speed Control}\label{sec:wheelctrl}
 Two limiters guard against slip and supply sag. On the host, the body command ramps with at most $2.0\,\mathrm{s^{-1}}$ acceleration and $4.0\,\mathrm{s^{-1}}$ deceleration, and passes through zero before changing sign. On the ESP32 every wheel target moves toward its goal at most $4.0\,\mathrm{s^{-1}}$.
 
 At every $10\,\mathrm{ms}$ step $k$, wheel $i$ has the filtered measured speed $\omega_i(k)=0.7\,\omega_i(k-1)+0.3\,c_i(k)/4300$, with $c_i$ the counts per second. The control law, a feed-forward term plus a PI term with conditional anti-windup \cite{astrom2006}, is
@@ -171,8 +180,8 @@ Total & 13080 & 2026\textsuperscript{a} & -- \\
 \end{tabular}
 \end{table}
 
-\subsection{Vision Pipeline}
-Camera and inference speed were measured on $359$ consecutive frames with the full capture-and-detect loop and no hand in view: $29.9$ fps, with a hand-landmark inference time of $18.5\,\mathrm{ms}$ (mean), $18.2\,\mathrm{ms}$ (median), $27.1\,\mathrm{ms}$ (95th percentile). The cost with hands present is given in Section~IV-E. Setting the driver buffer to one frame instead of two halved the stream from $28.9$ to $14.5$ fps in an earlier benchmark with MJPG, because the camera dropped frames while the application held the only buffer.
+\subsection{Vision Pipeline}\label{sec:vision}
+Camera and inference speed were measured on $359$ consecutive frames with the full capture-and-detect loop and no hand in view: $29.9$ fps, with a hand-landmark inference time of $18.5\,\mathrm{ms}$ (mean), $18.2\,\mathrm{ms}$ (median), $27.1\,\mathrm{ms}$ (95th percentile). The cost with hands present is given in Section~\ref{sec:sess2}. Setting the driver buffer to one frame instead of two halved the stream from $28.9$ to $14.5$ fps in an earlier benchmark with MJPG, because the camera dropped frames while the application held the only buffer.
 
 The geometric logic is covered by $55$ automatic checks on synthetic hands (gestures, pose, role assignment including inverted labels, cursor) and $49$ checks of the dashboard's cursor handling in a browser (headless Chrome, $1280\times900$ window) (dwell click, two-finger click, relative slider grab, pad drag, hold buttons, release on lost hand); all passed on 12 November 2026.
 
@@ -189,10 +198,10 @@ On a real hand (script \texttt{tests/real\_hand\_eval.py}, one operator, $640\ti
   \label{fig:real}
 \end{figure}
 
-\subsection{Link Latency}
+\subsection{Link Latency}\label{sec:link}
 The round-trip time is measured per command from the sequence number of the UDP command to that of its acknowledgement. Table~\ref{tab:data} and Fig.~\ref{fig:rtt}(a) show medians of $6.6$--$8.1\,\mathrm{ms}$ and a heavy tail; the worst single value, $909\,\mathrm{ms}$ in the two-hand run, is far above the $300\,\mathrm{ms}$ robot watchdog and so a stop would have occurred. This is round-trip network latency only; it excludes camera capture, inference and gesture filtering.
 
-For $38$ ($26$) confirmed motion gestures in the v1 gesture (v2) run, the time from the logged gesture to the moment the most loaded wheel reached $50\,\%$ of its new target was $260\,\mathrm{ms}$ median ($204$--$359\,\mathrm{ms}$) and $257\,\mathrm{ms}$ median ($203$--$309\,\mathrm{ms}$). This includes the deliberate acceleration limits of Section~III-D, so it is not the minimum achievable latency, and it does not include the $4$ frames ($\approx133\,\mathrm{ms}$) needed to confirm a gesture.
+For $38$ ($26$) confirmed motion gestures in the v1 gesture (v2) run, the time from the logged gesture to the moment the most loaded wheel reached $50\,\%$ of its new target was $260\,\mathrm{ms}$ median ($204$--$359\,\mathrm{ms}$) and $257\,\mathrm{ms}$ median ($203$--$309\,\mathrm{ms}$). This includes the deliberate acceleration limits of Section~\ref{sec:wheelctrl}, so it is not the minimum achievable latency, and it does not include the $4$ frames ($\approx133\,\mathrm{ms}$) needed to confirm a gesture.
 
 \begin{table*}[!t]
 \caption{Commanded vs. encoder-derived body velocity (normalized units). The first six primitives are from the v1 gesture run; the diagonals are from the v2 run.}
@@ -230,13 +239,13 @@ Forward-right (v2) &  71 & (+0.313, -0.237, 0.000) & (+0.316, -0.243, -0.002) & 
   \label{fig:wheel}
 \end{figure*}
 
-\subsection{Wheel Tracking and Body Motion}
+\subsection{Wheel Tracking and Body Motion}\label{sec:wheeltrack}
 We evaluate wheel tracking only when the command has been constant for $0.3\,\mathrm{s}$ and at least $0.1$ in magnitude. Table~\ref{tab:ff} and Fig.~\ref{fig:wheel} give mean errors of $1.5$--$3.2\,\%$ of full scale over the three runs. The $95$th percentile of the error is higher, $4.4$--$4.8\,\%$ in the v1 gesture run and $6.1$--$7.4\,\%$ in the v2 run, so the $5\,\%$ mark is met by the mean but not by the tail in the latter. The front-right wheel, which has the largest dead zone, needs the highest mean duty ($0.48$--$0.49$ against $0.36$--$0.44$). We did not compare against a plain PID or against open loop on the same trajectories, so the benefit of the proposed controller over those is not quantified here.
 
 Table~\ref{tab:odo} compares the commanded and the encoder-derived body velocity from (\ref{eq:fk}) over segments with a constant primitive. The error in the main axis is below $0.6\,\%$ for translations and about $2.4$--$2.5\,\%$ for rotations, and the unintended motion in the other axes stays at or below $0.004$. These are velocities from the wheel encoders and do not include wheel slip on the floor, so they are not ground-truth position errors.
 
-\subsection{Second Session: Vision Loop with Hands, End-to-End Latency and the Cursor near the Frame Edge}
-After the runs above we recorded four more server sessions with the per-run logger (\texttt{web/runlog.py}): one log row per camera frame, plus the 20\,Hz drive log when the robot was connected (data in \texttt{docs/data/v2/session2/}, table~\ref{tab:sess2}). Sessions A and B ran the code from before the changes described below (MJPG $640\times480$ capture, cursor mapped 1:1 to the fingertip); sessions C and D ran after the capture was raised to $1280\times720$ (hand detection still on a $640$-px-wide copy) and after the cursor was made to move faster than the fingertip near the frame edge (C with a piecewise-linear mapping, D with the smooth mapping of Section~\ref{sec:edge}). A and B had the robot connected; C and D tested the cursor only. A is the first run after a wheel fault was repaired, and D was still running when its log was copied, so D is a snapshot. One operator took part in all four sessions, and the sessions differ in what the operator did, in the number of open browser tabs and in duration, so they are not a controlled comparison.
+\subsection{Second Session: Vision Loop with Hands, End-to-End Latency and the Cursor near the Frame Edge}\label{sec:sess2}
+After the runs above we recorded four more server sessions with the per-run logger (\texttt{web/runlog.py}): one log row per camera frame, plus the 20\,Hz drive log when the robot was connected (data in \texttt{docs/data/v2/session2/}, Table~\ref{tab:sess2}). Sessions A and B ran the code from before the changes described below (MJPG $640\times480$ capture, cursor mapped 1:1 to the fingertip); sessions C and D ran after the capture was raised to $1280\times720$ (hand detection still on a $640$-px-wide copy) and after the cursor was made to move faster than the fingertip near the frame edge (C with a piecewise-linear mapping, D with the smooth mapping of Section~\ref{sec:edge}). A and B had the robot connected; C and D tested the cursor only. A is the first run after a wheel fault was repaired, and D was still running when its log was copied, so D is a snapshot. One operator took part in all four sessions, and the sessions differ in what the operator did, in the number of open browser tabs and in duration, so they are not a controlled comparison.
 
 \begin{table}[!t]
 \caption{Server sessions recorded with the per-run logger. Mean hand-landmark inference time (ms) is split by the number of hands in the frame; fps is the number of AI frames per second over the whole session.}
@@ -266,9 +275,9 @@ D & 1280$\times$720 & smooth & 214 & 21.9 & 28.9 & 52.4 & 47.2 \\
   \label{fig:sess2}
 \end{figure*}
 
-\emph{End-to-end latency (session A).} For $15$ confirmed motion gestures, the median time from the camera frame in which the gesture filter fired to the moment the most loaded wheel reached 50\,\% of its new target was $427$\,ms ($321$--$496$\,ms, Fig.~\ref{fig:sess2}b); the command left the laptop $37$\,ms after that frame (median). The filter itself needs $4$ consecutive frames, about three frame intervals ($120$--$140$\,ms at these frame rates) before the confirming frame, which is not included. The median target magnitude was $0.81$ of full speed; with the host acceleration limit of $2.0\,\mathrm{s^{-1}}$ half of that takes about $0.2\,\mathrm{s}$, so a large part of the delay is the deliberate ramp. This is longer than the $257$--$260\,\mathrm{ms}$ reported in Section~IV-C, which started from the gesture value written in the drive log instead of the camera frame (about $37$\,ms later) and used targets of other sizes; the $15$ events here are too few and too uniform to separate these causes. Session B contains a single event ($319$\,ms, target $0.5$).
+\emph{End-to-end latency (session A).} For $15$ confirmed motion gestures, the median time from the camera frame in which the gesture filter fired to the moment the most loaded wheel reached 50\,\% of its new target was $427$\,ms ($321$--$496$\,ms, Fig.~\ref{fig:sess2}b); the command left the laptop $37$\,ms after that frame (median). The filter itself needs $4$ consecutive frames, about three frame intervals ($120$--$140$\,ms at these frame rates) before the confirming frame, which is not included. The median target magnitude was $0.81$ of full speed; with the host acceleration limit of $2.0\,\mathrm{s^{-1}}$ half of that takes about $0.2\,\mathrm{s}$, so a large part of the delay is the deliberate ramp. This is longer than the $257$--$260\,\mathrm{ms}$ reported in Section~\ref{sec:link}, which started from the gesture value written in the drive log instead of the camera frame (about $37$\,ms later) and used targets of other sizes; the $15$ events here are too few and too uniform to separate these causes. Session B contains a single event ($319$\,ms, target $0.5$).
 
-\emph{Wheel tracking and link.} With the same rule as in Section~IV-D, the mean error was $1.3$\,\% (manual) and $1.5$\,\% (gesture) of full scale in A, and $0.9$\,\% in B (gesture only; $12$ manual samples are too few to report), with $95$th percentiles of $4.3$, $5.0$ and $4.2$\,\%. In A the duty was at the $0.95$ ceiling in $8.0$\,\% of the manual and $3.8$\,\% of the gesture samples, against $0.0$\,\% in B: at the higher speeds of A the controller ran out of voltage headroom, so the commanded speed could not be reached, which can distort diagonal motion if the wheels saturate unequally (not measured). The UDP round trip had a median of $6.4$ and $7.9$\,ms (95th percentile $23.9$ and $17.3$\,ms; maximum $104$ and $47$\,ms), consistent with the earlier runs.
+\emph{Wheel tracking and link.} With the same rule as in Section~\ref{sec:wheeltrack}, the mean error was $1.3$\,\% (manual) and $1.5$\,\% (gesture) of full scale in A, and $0.9$\,\% in B (gesture only; $12$ manual samples are too few to report), with $95$th percentiles of $4.3$, $5.0$ and $4.2$\,\%. In A the duty was at the $0.95$ ceiling in $8.0$\,\% of the manual and $3.8$\,\% of the gesture samples, against $0.0$\,\% in B: at the higher speeds of A the controller ran out of voltage headroom, so the commanded speed could not be reached, which can distort diagonal motion if the wheels saturate unequally (not measured). The UDP round trip had a median of $6.4$ and $7.9$\,ms (95th percentile $23.9$ and $17.3$\,ms; maximum $104$ and $47$\,ms), consistent with the earlier runs.
 
 \emph{Cursor near the frame edge.} The mapping of Section~\ref{sec:edge} was introduced after the operator reported that the UI hand was lost whenever the fingertip had to reach the frame border to hit the speed slider in the screen corner, and then that the cursor ran ahead of the fingertip when the stretch started abruptly. The logs give an indirect view only, because they do not store the raw fingertip position: the share of UI-hand frames with the cursor within $2\,\%$ of a screen edge was $2.3$\,\% in A and $1.4$\,\% in B (1:1 mapping), and $8.2$\,\% in C and $4.6$\,\% in D (stretched); the number of UI-hand segments longer than $0.3\,\mathrm{s}$ that ended with the cursor at an edge, a sign of losing the hand there, was $1$ of $6$ in A, $1$ of $3$ in B, $0$ of $15$ in C and $1$ of $9$ in D. The operator also needed the corner more in C and D because the task was to reach it, so these numbers show that the cursor reaches the screen edge with the stretched mapping, not that hand loss was reduced; the counts are small. The lead of the cursor over the fingertip near the edge (up to $6\,\%$ of the frame width by construction) was not measured against the fingertip position and rests on the operator's report.
 

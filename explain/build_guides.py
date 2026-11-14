@@ -187,6 +187,10 @@ def build_vi():
         "từng hình của bài báo) → **Phần 4** (các con số cần nhớ và câu hỏi tự kiểm tra).",
         "Mỗi hình đều được giải thích theo 3 bước: **Hình này là gì** → **Đọc từng bước** → "
         "**Rút ra điều gì**.",
+        "**Đánh số mục và bảng:** bản tiếng Anh dùng mẫu tạp chí **Elsevier** nên đánh số mục 1, 2.1, 4.2… và "
+        "Bảng 1–4; bản tiếng Việt vẫn dùng mẫu **IEEE** nên đánh số mục I, II-A, IV-B… và Bảng I–IV. Tài liệu "
+        "này ghi số mới trước, số kiểu IEEE trong ngoặc, ví dụ “Mục 2.1 (II-A)”; Bảng 1 = Bảng I, Bảng 2 = Bảng II… "
+        "Số hình (Hình 1–6) giống nhau ở cả hai bản.",
     ])
 
     # ---------------- Part 1
@@ -201,7 +205,7 @@ def build_vi():
     ])
     b.p("Robot có **4 bánh omni xếp hình chữ X**, nên đi được mọi hướng (tới, ngang, chéo) và xoay tại chỗ. "
         "Laptop gửi lệnh qua Wi-Fi tới **ESP32** trên robot. ESP32 điều khiển tốc độ từng bánh 100 lần mỗi giây.")
-    b.p("**Ba đóng góp chính** (mục I của bài):")
+    b.p("**Ba đóng góp chính** (mục 1 của bài):")
     b.nsteps([
         "Giao diện hai tay, có bộ **tự sửa nhãn tay trái/phải** (vì ảnh camera bị lật như gương).",
         "Kiến trúc **laptop ↔ ESP32 qua UDP** trên Wi-Fi riêng của robot, có khóa một người điều khiển, "
@@ -294,7 +298,7 @@ def build_vi():
         "operator, and no user study was performed” là **lời nói trung thực về giới hạn**: người đọc biết ngay độ tin "
         "cậy của kết quả.")
 
-    b.h2("Mục I. Introduction (Giới thiệu)")
+    b.h2("Mục 1 (I). Introduction (Giới thiệu)")
     b.bullets([
         "**Robot omni** đi được 3 chiều độc lập: **vₓ** (tới/lùi), **v_y** (sang trái/phải), **ω** (xoay). Điều khiển "
         "cả 3 cùng lúc khó hơn xe thường.",
@@ -304,7 +308,7 @@ def build_vi():
         "robot sẽ đi lệch, tự xoay.",
     ])
 
-    b.h2("Mục II-A. Kiến trúc Host–Edge — Hình 1")
+    b.h2("Mục 2.1 (II-A). Kiến trúc Host–Edge — Hình 1")
     b.fig("fig_arch_vi.png", "Hình 1 trong bài – kiến trúc hệ thống.")
     b.h3("Hình này là gì?")
     b.p("Sơ đồ khối của toàn hệ thống. **Khung trái (HOST)** là laptop, **khung phải (EDGE)** là ESP32 trên robot.")
@@ -327,7 +331,7 @@ def build_vi():
     b.p("Laptop lo phần **nặng** (AI, giao diện); ESP32 lo phần **nhanh và an toàn** (điều khiển bánh 100 Hz, tự dừng "
         "khi mất mạng). Có **2 lớp an toàn**: ESP32 dừng nếu 300 ms không có lệnh; laptop thay lệnh cũ hơn 0,4 s bằng 0.")
 
-    b.h2("Mục II-B. Mô hình động học — Hình 2 và công thức (1), (2)")
+    b.h2("Mục 2.2 (II-B). Mô hình động học — Hình 2 và công thức (1), (2)")
     b.fig("fig_kin_vi.png", "Hình 2 trong bài – hình học cấu hình chữ X.", width=9)
     b.h3("Hình này là gì?")
     b.p("Nhìn robot **từ trên xuống**. Hình vuông là thân robot, 4 thanh đen nghiêng 45° là 4 bánh: "
@@ -346,20 +350,20 @@ def build_vi():
         "**(1) Động học ngược:** từ lệnh (vₓ, v_y, ω) nhân với ma trận 4×3 ra tốc độ 4 bánh. Nếu có bánh vượt quá 1,0 thì "
         "**chia cả 4 bánh cho cùng một số**, để robot vẫn đi **đúng hướng**, chỉ chậm lại. (Nếu cắt từng bánh riêng thì hướng đi bị méo.)",
         "**(2) Động học thuận:** làm ngược lại, từ tốc độ **đo được** của 4 bánh tính ra robot đang thực sự đi thế nào. "
-        "Ma trận rất đơn giản: lấy chuyển vị rồi chia 4. Công thức này dùng để tạo **Bảng III** và **Hình 4b**.",
+        "Ma trận rất đơn giản: lấy chuyển vị rồi chia 4. Công thức này dùng để tạo **Bảng 3** và **Hình 4b**.",
         "Encoder: **8112 xung mỗi vòng bánh**; phần cứng PCNT của ESP32 đếm xung, có lọc nhiễu 12,5 µs.",
     ])
 
-    b.h2("Mục III. Giao diện cử chỉ và điều khiển bánh")
-    b.h3("III-A. Ngón nào đang duỗi — công thức (3)")
+    b.h2("Mục 3 (III). Giao diện cử chỉ và điều khiển bánh")
+    b.h3("3.1 (III-A). Ngón nào đang duỗi — công thức (3)")
     b.p("Một ngón được coi là **duỗi** nếu khoảng cách từ **cổ tay → đầu ngón** lớn hơn 1,15 lần khoảng cách "
         "**cổ tay → khớp giữa ngón**. Dùng **tỉ lệ** nên không phụ thuộc tay ở gần hay xa camera. Chỉ có ngón trỏ duỗi → "
         "đo góc chỉ, chia thành **8 hướng, mỗi hướng 45°**. Ngón trỏ + ngón giữa chỉ trái/phải → xoay. Nắm tay hoặc xòe tay → dừng.")
-    b.h3("III-B. Phân vai hai tay")
+    b.h3("3.2 (III-B). Phân vai hai tay")
     b.p("Ảnh bị lật gương nên MediaPipe gọi nhầm tay trái thành tay phải. Bộ phân vai: có 2 tay thì dựa vào **vị trí cổ tay "
         "trái/phải trên ảnh**, đồng thời tự học xem nhãn có bị đảo không (điểm tin cậy cₖ, đổi quy ước khi cₖ < −0,6). Có 1 tay "
         "thì **bỏ phiếu trong 10 khung**. Một tay vừa biến mất mà tay còn lại di chuyển ít hơn 150 px → giữ nguyên vai cũ.")
-    b.h3("III-C. Con trỏ, neo điểm bấm, kéo thanh trượt, mép khung")
+    b.h3("3.3 (III-C). Con trỏ, neo điểm bấm, kéo thanh trượt, mép khung")
     b.bullets([
         "**Bộ lọc One-Euro:** tay đứng yên → lọc mạnh (con trỏ đỡ rung); tay di chuyển nhanh → lọc nhẹ (con trỏ không bị trễ).",
         "**Các tư thế tay UI:** chỉ ngón trỏ = di chuyển con trỏ (giữ yên 0,8 s = bấm); ngón trỏ + ngón giữa = bấm/kéo.",
@@ -369,7 +373,7 @@ def build_vi():
         "càng ra gần mép con trỏ càng đi **nhanh hơn ngón tay** (tối đa 1,35 lần), để chạm mép màn hình khi ngón tay còn cách "
         "mép ảnh 6 %. Bản đầu tiên tăng đột ngột (1,67 lần) làm con trỏ “chạy trước” ngón tay, nên đã được thay.",
     ])
-    b.h3("III-D. Điều khiển tốc độ từng bánh — công thức (5) và Bảng I")
+    b.h3("3.4 (III-D). Điều khiển tốc độ từng bánh — công thức (5) và Bảng 1")
     b.p("Mỗi 10 ms, mỗi bánh tính PWM theo **3 phần cộng lại**:")
     b.bullets([
         "**Feedforward** uᶠᶠ = a + b·|r|: “đoán trước” cần bao nhiêu PWM cho tốc độ r. **a** = PWM tối thiểu để bánh bắt đầu "
@@ -378,7 +382,7 @@ def build_vi():
         "**I** = tích lũy sai số (Ki = 6,0): sửa sai số nhỏ còn kéo dài. **Chống bão hòa:** không tích lũy khi đang tăng tốc "
         "hoặc khi PWM đã chạm trần, tránh vọt lố.",
     ])
-    b.p("**Bảng I** liệt kê a, b của từng bánh (đo khi nhấc bánh lên khỏi sàn) và sai số trung bình khi chạy trên sàn:")
+    b.p("**Bảng 1** liệt kê a, b của từng bánh (đo khi nhấc bánh lên khỏi sàn) và sai số trung bình khi chạy trên sàn:")
     b.table(["Bánh", "a (PWM khởi động)", "b (độ dốc)", "Sai số v1 cử chỉ", "Sai số v2 hai tay"], [
         ["FL trước trái", "0,076", "0,470", "1,9 %", "2,5 %"],
         ["**FR trước phải**", "**0,148**", "**0,594**", "2,5 %", "2,6 %"],
@@ -388,7 +392,7 @@ def build_vi():
     b.p("**Cách đọc:** bánh FR “cứng” nhất: cần tới 14,8 % PWM mới bắt đầu quay, gấp 2,7 lần bánh RL (5,5 %). Nhờ mỗi bánh "
         "có a, b riêng nên dù 4 bánh khác nhau, sai số vẫn đều quanh 2–2,6 %.")
 
-    b.h2("Mục IV-A. Thiết lập thí nghiệm — Bảng II")
+    b.h2("Mục 4.1 (IV-A). Thiết lập thí nghiệm — Bảng 2")
     b.table(["Lần chạy", "Số dòng log", "Thời gian (s)", "RTT: trung vị / P95 / max (ms)"], [
         ["Thủ công (v1)", "3240", "1512", "7,8 / 22,5 / 97"],
         ["Cử chỉ (v1)", "4820", "247", "8,1 / 26,1 / 101"],
@@ -401,7 +405,7 @@ def build_vi():
         "robot đã tự dừng: cơ chế an toàn hoạt động đúng.")
     b.p("Lần chạy thủ công dài hơn nhiều (1512 s) nhưng ít dòng hơn, vì log chủ yếu ghi khi đang lái.")
 
-    b.h2("Mục IV-B. Thị giác máy và kết quả âm của con trỏ — Hình 3")
+    b.h2("Mục 4.2 (IV-B). Thị giác máy và kết quả âm của con trỏ — Hình 3")
     b.p("**Tốc độ:** đo 359 khung liên tiếp, không có tay: **29,9 fps**, AI mất trung bình **18,5 ms** mỗi khung "
         "(P95 = 27,1 ms). Khi để driver chỉ giữ 1 bộ đệm thay vì 2, tốc độ tụt từ 28,9 xuống còn 14,5 fps.")
     b.p("**Kiểm thử:** 55 bài kiểm tra tự động với tay giả lập + 49 bài kiểm tra con trỏ trong trình duyệt. Tất cả đều đạt.")
@@ -428,7 +432,7 @@ def build_vi():
         "khi ngón tay vẫn đang trôi nhẹ. Bài báo ghi rõ đây là **kết quả âm** (negative result). Viết vậy là trung thực "
         "và được đánh giá cao, nhưng chỉ có 12 lần bấm từ 1 người nên mới mang tính tham khảo.")
 
-    b.h2("Mục IV-C. Độ trễ đường truyền — Hình 4")
+    b.h2("Mục 4.3 (IV-C). Độ trễ đường truyền — Hình 4")
     b.fig("fig_rtt_odo_vi.png", "Hình 4 trong bài – (a) phân bố RTT; (b) lệnh so với vận tốc tính từ encoder.")
     b.h3("Hình 4a – Histogram độ trễ khứ hồi UDP")
     b.nsteps([
@@ -451,7 +455,7 @@ def build_vi():
     ])
     b.p("**Rút ra:** robot đi đúng lệnh. Lưu ý: số liệu tính từ **encoder bánh**, nên nếu bánh trượt trên sàn thì không "
         "thấy được. Đây **không phải** sai số vị trí thật đo bằng camera ngoài.")
-    b.h3("Bảng III – số chi tiết cho Hình 4b")
+    b.h3("Bảng 3 – số chi tiết cho Hình 4b")
     b.table(["Chuyển động", "Lệnh (vₓ, v_y, ω)", "Từ encoder", "Sai số trục chính", "Trục khác lớn nhất"], [
         ["Tới", "(+0,472; 0; 0)", "(+0,474; +0,001; +0,002)", "+0,6 %", "0,002"],
         ["Lùi", "(−0,510; 0; 0)", "(−0,510; −0,001; −0,001)", "−0,1 %", "0,001"],
@@ -467,7 +471,7 @@ def build_vi():
         "257–260 ms** (trung vị). Phần lớn thời gian này là do **cố ý giới hạn gia tốc**. Con số này chưa tính 4 khung "
         "(≈133 ms) cần để xác nhận cử chỉ.")
 
-    b.h2("Mục IV-D. Bám tốc độ bánh — Hình 5")
+    b.h2("Mục 4.4 (IV-D). Bám tốc độ bánh — Hình 5")
     b.fig("fig_wheel_vi.png", "Hình 5 trong bài – điều khiển tốc độ bánh ở lần chạy hai tay.")
     b.h3("Hình 5a, 5b – tốc độ theo thời gian của bánh FL và FR")
     b.nsteps([
@@ -498,7 +502,7 @@ def build_vi():
     b.p("Sai số **trung bình đạt mục tiêu < 5 %**, nhưng **phần đuôi (P95) thì không** ở lần chạy v2. Bài báo cũng thừa nhận "
         "chưa so sánh với PID thường hay điều khiển vòng hở, nên **chưa chứng minh được bộ điều khiển này tốt hơn** các cách đó.")
 
-    b.h2("Mục IV-E. Phiên thứ hai: có tay thật, độ trễ đầu-cuối, con trỏ ở mép — Bảng IV và Hình 6")
+    b.h2("Mục 4.5 (IV-E). Phiên thứ hai: có tay thật, độ trễ đầu-cuối, con trỏ ở mép — Bảng 4 và Hình 6")
     b.p("Sau các lần chạy trên, có thêm **4 phiên A, B, C, D**, mỗi khung camera được ghi một dòng log. A, B dùng camera "
         "640×480 và con trỏ đi 1:1 theo ngón tay. C, D dùng 1280×720 và con trỏ được “kéo giãn” ở mép (C: kiểu gấp khúc, "
         "D: kiểu mượt). A, B có kết nối robot; C, D chỉ thử con trỏ.")
@@ -509,7 +513,7 @@ def build_vi():
         ["D", "1280×720", "mượt", "214", "21,9", "28,9", "52,4", "47,2"],
     ], widths=[1.3, 2.2, 2, 2, 1.4, 2.6, 2.4, 2.4])
     b.p("**Cách đọc:** so sánh theo cột. Không có tay thì AI mất khoảng 28–31 ms; **có tay thì 43–56 ms**, gần gấp đôi. "
-        "fps cả phiên chỉ 18–25,5, thấp hơn 29,9 fps ở mục IV-B, vì server còn phải mã hóa và truyền ảnh lên web. Bốn phiên "
+        "fps cả phiên chỉ 18–25,5, thấp hơn 29,9 fps ở mục 4.2, vì server còn phải mã hóa và truyền ảnh lên web. Bốn phiên "
         "khác nhau về thao tác và thời gian, nên **không phải so sánh có kiểm soát**.")
     b.fig("fig_sess2_vi.png", "Hình 6 trong bài – (a) thời gian AI theo phiên và số tay; (b) độ trễ đầu-cuối phiên A.")
     b.h3("Hình 6a – box plot thời gian suy luận AI")
@@ -530,9 +534,9 @@ def build_vi():
     ])
     b.p("**Rút ra:** từ lúc ra cử chỉ đến khi robot chạy rõ mất khoảng **0,4–0,5 giây**. Trong đó: lệnh rời laptop sau "
         "khoảng 37 ms; **khoảng 0,2 s là do cố ý tăng tốc từ từ** (giới hạn gia tốc 2,0/s, mục tiêu trung bình 0,81 tốc độ tối đa); "
-        "chưa tính thêm khoảng 120–140 ms để bộ lọc đủ 4 khung. Con số này lớn hơn 257–260 ms ở mục IV-C vì mốc bắt đầu tính "
+        "chưa tính thêm khoảng 120–140 ms để bộ lọc đủ 4 khung. Con số này lớn hơn 257–260 ms ở mục 4.3 vì mốc bắt đầu tính "
         "sớm hơn (khung camera thay vì dòng log) và độ lớn tốc độ mục tiêu khác nhau. **Mạng thì nhanh, phần chậm là camera + AI + bộ lọc + tăng tốc.**")
-    b.h3("Hai ý còn lại của mục IV-E")
+    b.h3("Hai ý còn lại của mục 4.5")
     b.bullets([
         "**Bám bánh:** sai số trung bình 0,9–1,5 %. Ở phiên A, PWM chạm trần 0,95 trong 4–8 % số mẫu: ở tốc độ cao, pin "
         "12 V không còn đủ điện áp dư, nên bánh không đạt được tốc độ đặt.",
@@ -541,7 +545,7 @@ def build_vi():
         "trỏ **tới được mép**, chưa chứng minh giảm mất tay.",
     ])
 
-    b.h2("Mục V và VI. Hạn chế và Kết luận")
+    b.h2("Mục 5 và 6 (V và VI). Hạn chế và Kết luận")
     b.p("**Hạn chế** (bài tự nêu): chỉ 1 robot, 1 mặt sàn, 1 người; chưa khảo sát người dùng; đo con trỏ trên tay thật chỉ "
         "có 12 lần bấm; chưa so sánh bộ điều khiển với phương án cơ sở; độ trễ đầu-cuối chỉ có 15 lần; **không có cảm biến vật "
         "cản**, người điều khiển là lớp an toàn duy nhất.")
@@ -554,14 +558,14 @@ def build_vi():
     b.h1("Phần 4. Ghi nhớ nhanh và tự kiểm tra")
     b.h2("10 con số quan trọng nhất")
     b.table(["#", "Con số", "Ở đâu", "Nói gì"], [
-        ["1", "13.080 chu kỳ, 2026 s", "Bảng II", "Lượng dữ liệu thật dùng để đánh giá"],
-        ["2", "29,9 fps; 18,5 ms", "IV-B", "Camera + AI khi không có tay"],
-        ["3", "18–25,5 fps; 45–56 ms", "Bảng IV, Hình 6a", "Khi có tay thật, chạy cả hệ thống"],
-        ["4", "RTT 6,6–8,1 ms (trung vị)", "Bảng II, Hình 4a", "Mạng rất nhanh"],
-        ["5", "909 ms (max)", "Bảng II", "Một lần mất kết nối, watchdog đã dừng robot"],
-        ["6", "1,5–3,2 % (trung bình)", "Bảng I, Hình 5d", "Sai số tốc độ bánh"],
+        ["1", "13.080 chu kỳ, 2026 s", "Bảng 2", "Lượng dữ liệu thật dùng để đánh giá"],
+        ["2", "29,9 fps; 18,5 ms", "4.2", "Camera + AI khi không có tay"],
+        ["3", "18–25,5 fps; 45–56 ms", "Bảng 4, Hình 6a", "Khi có tay thật, chạy cả hệ thống"],
+        ["4", "RTT 6,6–8,1 ms (trung vị)", "Bảng 2, Hình 4a", "Mạng rất nhanh"],
+        ["5", "909 ms (max)", "Bảng 2", "Một lần mất kết nối, watchdog đã dừng robot"],
+        ["6", "1,5–3,2 % (trung bình)", "Bảng 1, Hình 5d", "Sai số tốc độ bánh"],
         ["7", "P95 6,1–7,4 % (v2)", "Hình 5d", "Phần đuôi vượt mốc 5 %"],
-        ["8", "≤ 0,6 % tịnh tiến; 2,5 % xoay", "Bảng III, Hình 4b", "Robot đi đúng lệnh"],
+        ["8", "≤ 0,6 % tịnh tiến; 2,5 % xoay", "Bảng 3, Hình 4b", "Robot đi đúng lệnh"],
         ["9", "427 ms", "Hình 6b", "Trễ đầu-cuối, phần cần cải thiện"],
         ["10", "−5 % rung; 11/12 lần bấm tệ hơn", "Hình 3", "Kết quả âm về con trỏ"],
     ], widths=[0.8, 4.6, 3.6, 7.6])
@@ -575,7 +579,7 @@ def build_vi():
          "Vùng chết lớn nhất (a = 0,148) và độ dốc lớn nhất (b = 0,594), nhìn thấy ở đường đỏ trong Hình 5c."),
         ("Sai số bánh có đạt mục tiêu 5 % không?",
          "Trung bình thì đạt (1,5–3,2 %). P95 ở lần chạy v2 thì không (6,1–7,4 %), như râu vượt đường đỏ trong Hình 5d."),
-        ("Bảng III có phải là sai số vị trí thật của robot không?",
+        ("Bảng 3 có phải là sai số vị trí thật của robot không?",
          "Không. Nó tính từ encoder bánh, nên không thấy trượt bánh. Muốn có sai số thật cần camera ngoài hoặc cảm biến khác."),
         ("Vì sao độ trễ 427 ms lớn hơn 257–260 ms?",
          "Mốc bắt đầu khác nhau (khung camera sớm hơn dòng log khoảng 37 ms), độ lớn mục tiêu khác nhau, và phần lớn là do cố ý giới hạn gia tốc."),
@@ -597,8 +601,9 @@ def build_en():
     b = Builder()
     b.title("Reading the Research Paper: A Simple Guide",
             "Plain-English guide to “A Vision-Based Dual-Mode Hand Gesture Interface … Four-Wheel "
-            "Omnidirectional Mobile Robot” (reports/research_paper/paper_en.pdf). The Vietnamese paper "
-            "has the same content, figures and numbers.")
+            "Omnidirectional Mobile Robot” (reports/research_paper/paper_en.pdf, Elsevier journal layout). "
+            "The Vietnamese paper has the same content, figures and numbers, but uses the IEEE layout, "
+            "so its sections are numbered I, II-A… and its tables I–IV.")
 
     b.box("How to use this guide", [
         "Open the paper (PDF) next to this guide. Read in this order: **Part 1** (what the paper says) → "
@@ -618,7 +623,7 @@ def build_en():
     b.p("The robot has **4 omni wheels in an X shape**, so it can move in any direction (forward, sideways, diagonal) and "
         "turn in place. The laptop sends commands over Wi-Fi to an **ESP32** on the robot. The ESP32 controls each wheel's "
         "speed 100 times per second.")
-    b.p("**Three main contributions** (Section I):")
+    b.p("**Three main contributions** (Section 1):")
     b.nsteps([
         "A two-hand interface, with a part that **fixes the left/right hand label by itself** (the camera image is mirrored).",
         "A **laptop ↔ ESP32 link over UDP** on the robot's own Wi-Fi, with a one-driver lock, safety timers on both sides "
@@ -701,7 +706,7 @@ def build_en():
         "are the same as in the table in Part 1. The last sentence, “All results come from one robot and one operator, and "
         "no user study was performed”, is an **honest statement of limits**: the reader knows right away how far to trust the results.")
 
-    b.h2("Section I. Introduction")
+    b.h2("Section 1. Introduction")
     b.bullets([
         "An **omni robot** has 3 independent motions: **vₓ** (forward/back), **v_y** (left/right), **ω** (turn). "
         "Controlling all three at once is harder than driving a normal car.",
@@ -711,7 +716,7 @@ def build_en():
         "4 wheels, the robot drifts and turns by itself.",
     ])
 
-    b.h2("Section II-A. Host–edge architecture — Figure 1")
+    b.h2("Section 2.1. Host–edge architecture — Figure 1")
     b.fig("fig_arch_en.png", "Figure 1 in the paper – system architecture.")
     b.h3("What is it?")
     b.p("A block diagram of the whole system. **Left box (HOST)** = laptop. **Right box (EDGE)** = ESP32 on the robot.")
@@ -735,7 +740,7 @@ def build_en():
         "100 Hz, stop by itself if the network is lost). There are **2 safety layers**: the ESP32 stops after 300 ms with no "
         "command, and the laptop replaces any command older than 0.4 s with zero.")
 
-    b.h2("Section II-B. Kinematic model — Figure 2 and equations (1), (2)")
+    b.h2("Section 2.2. Kinematic model — Figure 2 and equations (1), (2)")
     b.fig("fig_kin_en.png", "Figure 2 in the paper – X-configuration geometry.", width=9)
     b.h3("What is it?")
     b.p("The robot **seen from above**. The square is the body. The 4 black bars at 45° are the wheels: "
@@ -755,22 +760,22 @@ def build_en():
         "wheel would go above 1.0, **all 4 wheels are divided by the same number**. The robot keeps the **same direction** "
         "and just goes slower. (Cutting each wheel on its own would bend the path.)",
         "**(2) Forward kinematics:** the reverse. From the **measured** wheel speeds, work out how the robot is really moving. "
-        "The matrix is simple: the transpose divided by 4. This gives **Table III** and **Figure 4b**.",
+        "The matrix is simple: the transpose divided by 4. This gives **Table 3** and **Figure 4b**.",
         "Encoder: **8112 counts per wheel turn**. The ESP32's PCNT hardware counts the pulses, with a 12.5 µs noise filter.",
     ])
 
-    b.h2("Section III. Gesture interface and wheel control")
-    b.h3("III-A. Which finger is straight — equation (3)")
+    b.h2("Section 3. Gesture interface and wheel control")
+    b.h3("3.1. Which finger is straight — equation (3)")
     b.p("A finger counts as **straight** if the distance **wrist → fingertip** is more than 1.15 times the distance "
         "**wrist → middle finger joint**. Because it is a **ratio**, it works whether the hand is near or far from the camera. "
         "Only the index finger straight → measure the pointing angle and round it to **8 directions, 45° each**. Index + "
         "middle finger pointing left/right → turn. Fist or open palm → stop.")
-    b.h3("III-B. Hand roles")
+    b.h3("3.2. Hand roles")
     b.p("The image is mirrored, so MediaPipe calls the left hand “right”. The role assigner works like this. With 2 hands, "
         "it uses the **left/right position of the wrists in the image**, and learns by itself whether the labels are flipped "
         "(a trust score cₖ; it switches when cₖ < −0.6). With 1 hand, it takes a **vote over 10 frames**. If one hand just "
         "disappeared and the other moved less than 150 px, the old role is kept.")
-    b.h3("III-C. Cursor, click anchor, slider grab, frame edge")
+    b.h3("3.3. Cursor, click anchor, slider grab, frame edge")
     b.bullets([
         "**One-Euro filter:** hand still → strong smoothing (less shaking); hand moving fast → light smoothing (no lag).",
         "**UI hand poses:** index only = move the cursor (hold still 0.8 s = click); index + middle = click or drag.",
@@ -781,7 +786,7 @@ def build_en():
         "It reaches the screen edge while the finger is still 6 % away from the image border. A first version jumped to "
         "1.67× suddenly and made the cursor “run ahead”, so it was replaced.",
     ])
-    b.h3("III-D. Speed control for each wheel — equation (5) and Table I")
+    b.h3("3.4. Speed control for each wheel — equation (5) and Table 1")
     b.p("Every 10 ms, each wheel's PWM is the **sum of 3 parts**:")
     b.bullets([
         "**Feed-forward** uᶠᶠ = a + b·|r|: a “first guess” of the PWM needed for speed r. **a** = the smallest PWM that "
@@ -790,7 +795,7 @@ def build_en():
         "**I** = sum of past errors (Ki = 6.0): removes small errors that last. **Anti-windup:** it stops summing while the "
         "robot is speeding up or the PWM is at its limit, so the wheel does not overshoot.",
     ])
-    b.p("**Table I** gives a and b for each wheel (measured with the wheels lifted off the floor) and the mean error on the floor:")
+    b.p("**Table 1** gives a and b for each wheel (measured with the wheels lifted off the floor) and the mean error on the floor:")
     b.table(["Wheel", "a (start PWM)", "b (slope)", "Error v1 gesture", "Error v2 two-hand"], [
         ["FL front-left", "0.076", "0.470", "1.9 %", "2.5 %"],
         ["**FR front-right**", "**0.148**", "**0.594**", "2.5 %", "2.6 %"],
@@ -800,7 +805,7 @@ def build_en():
     b.p("**How to read it:** FR is the “stiffest” wheel. It needs 14.8 % PWM just to start, 2.7 times more than RL (5.5 %). "
         "Because each wheel has its own a and b, the errors stay similar (about 2–2.6 %) even though the wheels are different.")
 
-    b.h2("Section IV-A. Experimental setup — Table II")
+    b.h2("Section 4.1. Experimental setup — Table 2")
     b.table(["Run", "Log rows", "Time (s)", "RTT: median / P95 / max (ms)"], [
         ["Manual (v1)", "3240", "1512", "7.8 / 22.5 / 97"],
         ["Gesture (v1)", "4820", "247", "8.1 / 26.1 / 101"],
@@ -813,7 +818,7 @@ def build_en():
         "300 ms watchdog, so the robot stopped by itself at that moment. The safety system worked.")
     b.p("The manual run is much longer (1512 s) but has fewer rows, because the log is written mostly while driving.")
 
-    b.h2("Section IV-B. Vision and the cursor negative result — Figure 3")
+    b.h2("Section 4.2. Vision and the cursor negative result — Figure 3")
     b.p("**Speed:** over 359 frames in a row with no hand: **29.9 fps**, AI takes **18.5 ms** per frame on average (P95 = 27.1 ms). "
         "With only 1 driver buffer instead of 2, the speed fell from 28.9 to 14.5 fps.")
     b.p("**Tests:** 55 automatic checks with simulated hands + 49 cursor checks in a browser. All passed.")
@@ -841,7 +846,7 @@ def build_en():
         "the finger was still drifting a little. The paper calls this a **negative result**. That is honest and good science, "
         "but with only 12 clicks from 1 person it is only an early sign.")
 
-    b.h2("Section IV-C. Link latency — Figure 4")
+    b.h2("Section 4.3. Link latency — Figure 4")
     b.fig("fig_rtt_odo_en.png", "Figure 4 in the paper – (a) RTT distribution; (b) command vs. encoder-based velocity.")
     b.h3("Figure 4a – histogram of UDP round-trip time")
     b.nsteps([
@@ -864,7 +869,7 @@ def build_en():
     ])
     b.p("**What it tells us:** the robot does what it is told. Note: these numbers come from the **wheel encoders**, so wheel "
         "slip on the floor is not seen. This is **not** a true position error measured by an outside camera.")
-    b.h3("Table III – detailed numbers for Figure 4b")
+    b.h3("Table 3 – detailed numbers for Figure 4b")
     b.table(["Motion", "Command (vₓ, v_y, ω)", "From encoders", "Main-axis error", "Max other axis"], [
         ["Forward", "(+0.472, 0, 0)", "(+0.474, +0.001, +0.002)", "+0.6 %", "0.002"],
         ["Backward", "(−0.510, 0, 0)", "(−0.510, −0.001, −0.001)", "−0.1 %", "0.001"],
@@ -880,7 +885,7 @@ def build_en():
         "**about 257–260 ms** (median). Most of this time comes from the **deliberate acceleration limit**. It does not "
         "include the 4 frames (≈133 ms) needed to confirm the gesture.")
 
-    b.h2("Section IV-D. Wheel tracking — Figure 5")
+    b.h2("Section 4.4. Wheel tracking — Figure 5")
     b.fig("fig_wheel_en.png", "Figure 5 in the paper – wheel speed control in the two-hand run.")
     b.h3("Figure 5a, 5b – speed over time for wheels FL and FR")
     b.nsteps([
@@ -911,7 +916,7 @@ def build_en():
     b.p("The **mean error meets the < 5 % goal**, but **the tail (P95) does not** in the v2 run. The paper also admits it did "
         "not compare against a plain PID or open-loop control, so it **has not proved that this controller is better** than those.")
 
-    b.h2("Section IV-E. Second session: real hands, end-to-end delay, cursor at the edge — Table IV and Figure 6")
+    b.h2("Section 4.5. Second session: real hands, end-to-end delay, cursor at the edge — Table 4 and Figure 6")
     b.p("After the runs above, **4 more sessions A, B, C, D** were logged, one row per camera frame. A and B used a 640×480 "
         "camera and a 1:1 cursor. C and D used 1280×720 and a cursor that is “stretched” near the edge (C: piecewise, "
         "D: smooth). A and B had the robot connected; C and D tested only the cursor.")
@@ -922,7 +927,7 @@ def build_en():
         ["D", "1280×720", "smooth", "214", "21.9", "28.9", "52.4", "47.2"],
     ], widths=[1.5, 2.2, 2.1, 1.9, 1.3, 2.6, 2.3, 2.3])
     b.p("**How to read it:** compare down each column. With no hand, AI takes about 28–31 ms; **with hands, 43–56 ms**, almost "
-        "double. The whole-session fps is only 18–25.5, below the 29.9 fps of Section IV-B, because the server also encodes and "
+        "double. The whole-session fps is only 18–25.5, below the 29.9 fps of Section 4.2, because the server also encodes and "
         "streams video to the web page. The 4 sessions differ in what the user did and in length, so this is **not a controlled comparison**.")
     b.fig("fig_sess2_en.png", "Figure 6 in the paper – (a) AI time per session and number of hands; (b) end-to-end delay in session A.")
     b.h3("Figure 6a – box plot of AI inference time")
@@ -944,9 +949,9 @@ def build_en():
     b.p("**What it tells us:** from making a gesture to clear robot motion takes about **0.4–0.5 seconds**. Of that: the "
         "command leaves the laptop after about 37 ms; **about 0.2 s is the deliberate slow speed-up** (acceleration limit 2.0/s, "
         "average target 0.81 of top speed); and about 120–140 ms for the 4-frame filter is not even included. This is larger "
-        "than the 257–260 ms in Section IV-C because the start point is earlier (camera frame, not log row) and the target "
+        "than the 257–260 ms in Section 4.3 because the start point is earlier (camera frame, not log row) and the target "
         "speeds are different. **The network is fast; the slow part is camera + AI + filter + speed-up.**")
-    b.h3("The other two points of Section IV-E")
+    b.h3("The other two points of Section 4.5")
     b.bullets([
         "**Wheel tracking:** mean error 0.9–1.5 %. In session A the PWM hit the 0.95 ceiling in 4–8 % of samples: at high "
         "speed the 12 V battery had no spare voltage, so the wheel could not reach the set speed.",
@@ -955,7 +960,7 @@ def build_en():
         "numbers only show the cursor **can reach the edge**, not that hand loss went down.",
     ])
 
-    b.h2("Sections V and VI. Limitations and conclusion")
+    b.h2("Sections 5 and 6. Limitations and conclusion")
     b.p("**Limitations** (the paper lists them itself): only 1 robot, 1 floor, 1 person; no user study; real-hand cursor tests "
         "had only 12 clicks; no comparison of the controller with a baseline; end-to-end delay from only 15 events; **no "
         "obstacle sensor**, so the human driver is the only safety layer.")
@@ -968,14 +973,14 @@ def build_en():
     b.h1("Part 4. Quick memory and self-test")
     b.h2("The 10 most important numbers")
     b.table(["#", "Number", "Where", "What it says"], [
-        ["1", "13,080 cycles, 2026 s", "Table II", "Amount of real data used"],
-        ["2", "29.9 fps; 18.5 ms", "IV-B", "Camera + AI with no hand"],
-        ["3", "18–25.5 fps; 45–56 ms", "Table IV, Fig. 6a", "With real hands and the full system running"],
-        ["4", "RTT 6.6–8.1 ms (median)", "Table II, Fig. 4a", "The network is very fast"],
-        ["5", "909 ms (max)", "Table II", "One link drop; the watchdog stopped the robot"],
-        ["6", "1.5–3.2 % (mean)", "Table I, Fig. 5d", "Wheel speed error"],
+        ["1", "13,080 cycles, 2026 s", "Table 2", "Amount of real data used"],
+        ["2", "29.9 fps; 18.5 ms", "4.2", "Camera + AI with no hand"],
+        ["3", "18–25.5 fps; 45–56 ms", "Table 4, Fig. 6a", "With real hands and the full system running"],
+        ["4", "RTT 6.6–8.1 ms (median)", "Table 2, Fig. 4a", "The network is very fast"],
+        ["5", "909 ms (max)", "Table 2", "One link drop; the watchdog stopped the robot"],
+        ["6", "1.5–3.2 % (mean)", "Table 1, Fig. 5d", "Wheel speed error"],
         ["7", "P95 6.1–7.4 % (v2)", "Fig. 5d", "The tail goes above the 5 % mark"],
-        ["8", "≤ 0.6 % moving; 2.5 % turning", "Table III, Fig. 4b", "The robot follows the command"],
+        ["8", "≤ 0.6 % moving; 2.5 % turning", "Table 3, Fig. 4b", "The robot follows the command"],
         ["9", "427 ms", "Fig. 6b", "End-to-end delay, the part to improve"],
         ["10", "−5 % shaking; 11/12 clicks worse", "Fig. 3", "Negative cursor result"],
     ], widths=[0.8, 4.6, 3.6, 7.6])
@@ -989,7 +994,7 @@ def build_en():
          "It has the largest dead zone (a = 0.148) and the steepest slope (b = 0.594). See the red line in Figure 5c."),
         ("Does the wheel error meet the 5 % goal?",
          "The mean does (1.5–3.2 %). The P95 in the v2 run does not (6.1–7.4 %): the whiskers in Figure 5d go above the red line."),
-        ("Is Table III the true position error of the robot?",
+        ("Is Table 3 the true position error of the robot?",
          "No. It comes from the wheel encoders, so wheel slip is not seen. A true error needs an outside camera or another sensor."),
         ("Why is the 427 ms delay bigger than 257–260 ms?",
          "Different start points (the camera frame is about 37 ms earlier than the log row), different target sizes, and most of it is the deliberate acceleration limit."),

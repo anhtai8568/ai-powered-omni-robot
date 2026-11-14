@@ -59,6 +59,8 @@ Mọi hình và con số lấy từ dữ liệu trong `docs/data/` bằng `pytho
 Phiên chạy thứ hai (bốn phiên server có tay thật, log trong `docs/data/v2/session2/`) do `python reports/session2.py` xử lý, ra `reports/figures/stats_session2.json` và hình `fig_sess2_*`; từng phiên đọc bằng `python tests/analyze_run.py logs/ai_<giờ>.csv logs/drive_<giờ>.csv`. Dựng lại PDF cần TeX Live
 (`latexmk -pdf paper_en.tex`) hoặc Tectonic; bản tiếng Việt nên dùng `xelatex`. Tác giả: Tai Nguyen Anh; cơ quan và email trong bài báo (mẫu IEEE) còn để trống, cần điền trước khi nộp.
 
+`explain/` có hai file Word giải thích bài nghiên cứu và cách đọc từng biểu đồ: `Giai_thich_paper_VI.docx` (tiếng Việt) và `Paper_Explained_EN.docx` (tiếng Anh đơn giản). Tạo lại bằng `python explain/build_guides.py` (cần `python-docx`) sau khi chạy lại `reports/make_figures.py`.
+
 
 ## Cài đặt
 
@@ -175,3 +177,4 @@ ESP32 DevKit V1, 2 driver L298N, 4 motor GM25-370 (1:78, encoder 8112 xung/vòng
 | `tests/` | đo FPS camera, phân tích log, kiểm thử con trỏ, đo trên tay thật |
 | `docs/` | sơ đồ chân, dữ liệu đo bản 1 và bản 2 |
 | `reports/` | bài nghiên cứu và tài liệu kỹ thuật (LaTeX, tiếng Anh và tiếng Việt), script sinh hình |
+| `explain/` | file Word giải thích bài nghiên cứu và các biểu đồ (tiếng Việt, tiếng Anh) |

@@ -40,39 +40,107 @@
             country={India}}
 
 \begin{abstract}
-Hand-gesture teleoperation of mobile robots is usually limited to motion commands, so the operator still returns to a mouse or keyboard to change mode, set speed or press the emergency stop. We present a low-cost system in which one laptop webcam serves both purposes at once: the dominant hand drives a virtual cursor over a web dashboard, and the non-dominant hand commands the three planar degrees of freedom $(v_x, v_y, \omega)$ of a four-wheel X-configuration omnidirectional robot. On the laptop, a geometric pipeline on top of MediaPipe hand landmarks assigns hand roles with online correction of the mirrored handedness label and smooths the cursor with a One-Euro filter. On the ESP32 robot controller, four independent $100\,\mathrm{Hz}$ loops combine per-wheel dead-zone feed-forward with a PI controller whose integrator is frozen during acceleration and saturation. We evaluate the system on $13{,}080$ logged control cycles ($2{,}026\,\mathrm{s}$) from three floor runs. The vision loop ran at $29.9$ fps with $18.5\,\mathrm{ms}$ mean hand-landmark inference; the UDP round trip over the robot's own Wi-Fi access point had a median of $6.6$--$8.1\,\mathrm{ms}$ (95th percentile $16$--$26\,\mathrm{ms}$); the mean wheel-speed error under load was $1.5$--$3.2\,\%$ of full scale; and the body motion reconstructed from the encoders deviated from the command by $0.1$--$2.5\,\%$. In four later sessions with real hands the vision loop ran at $18.0$--$25.5$ fps with $45.5$--$55.5$\,ms inference when one hand was in view, and the delay from the camera frame that confirmed a gesture to half wheel speed was $427$\,ms (median of $15$). Two cursor mechanisms that looked effective on a simulated hand, the One-Euro filter and a click-point anchor, gave little or no benefit on a real hand (jitter $-5\,\%$; click shift not reduced; reported as negative results). All results come from one robot and one operator, and no user study was performed.
+Robots in hospitals, laboratories and clean rooms are often operated by people who should not touch shared input devices because of sterility, gloves or contamination risk. Existing hand-gesture teleoperation removes the joystick but not the mouse: changing mode, setting speed or pressing the emergency stop still needs a physical device. We present a contactless operation system for a four-wheel X-configuration omnidirectional robot in which one laptop webcam serves two roles at once. Following the asymmetric division of labour between the hands, the dominant hand moves a virtual cursor over the whole web dashboard while the non-dominant hand commands the three planar velocities $(v_x, v_y, \omega)$. MediaPipe hand landmarks feed a geometric pipeline that corrects the mirrored handedness label online; an ESP32 runs four $100\,\mathrm{Hz}$ wheel loops that combine per-wheel dead-zone feed-forward with a PI controller, and two-sided watchdogs stop the robot when the link is lost. On $13{,}080$ logged control cycles from three floor runs, the UDP round trip had a median of $6.6$--$8.1\,\mathrm{ms}$, the mean wheel-speed error was $1.5$--$3.2\,\%$ of full scale, and the encoder-derived body motion deviated from the command by $0.1$--$2.5\,\%$. With real hands the vision loop ran at $18.0$--$25.5$ fps, and the delay from the confirming camera frame to half wheel speed was $427$\,ms (median of $15$). Two cursor aids that helped on a simulated hand gave no benefit on a real one. All results come from one robot and one operator.
 \end{abstract}
 
 \begin{keyword}
-omnidirectional mobile robot \sep hand gesture interface \sep human--robot interaction \sep teleoperation \sep One-Euro filter \sep feed-forward control \sep ESP32
+contactless interaction \sep omnidirectional mobile robot \sep hand gesture interface \sep bimanual interaction \sep human--robot interaction \sep teleoperation \sep ESP32
 \end{keyword}
 
 \end{frontmatter}
 
 %--------------------------------------------------------------------
 \section{Introduction}
-Omnidirectional mobile robots (OMRs) with omni or mecanum wheels move holonomically: they translate forward, sideways, or diagonally and rotate in place with three independent velocities $(v_x, v_y, \omega)$ \cite{siegwart2011}. This freedom makes teleoperation harder, because the operator must command three coupled quantities while also supervising the robot through a graphical interface.
+Mobile robots are increasingly used in hospitals and laboratories to deliver medication and samples, disinfect rooms and reduce the contact between staff and patients, a trend accelerated by the COVID-19 pandemic \cite{yang2020}. The people who supervise these robots often work under conditions in which touching a shared keyboard, mouse or touch screen is undesirable: they wear gloves, must keep their hands sterile, or should not carry contamination from one device to another. The same problem has driven a long line of work on touchless interaction with medical images in the operating room \cite{wachs2008,ohara2014,mewes2017}, but it applies equally to the operation of a mobile robot.
 
-Contactless interfaces based on a camera and a hand-landmark detector such as MediaPipe Hands \cite{zhang2020} are attractive because they need no wearable hardware. A common design maps one hand to a small set of discrete motion commands. In such a design, tasks that belong to the supervisory interface (switching control mode, adjusting a speed slider, pressing an emergency stop) typically still require a physical mouse or keyboard. Using the index fingertip as a mouse pointer brings its own problems: high-frequency tremor when the hand is held still, and a displacement of the index fingertip when a second finger is extended to click. Both turned out to be small in our real-hand measurements (Section~\ref{sec:vision}).
+Omnidirectional mobile robots (OMRs) with omni or mecanum wheels are well suited to cluttered indoor spaces because they move holonomically: they translate forward, sideways or diagonally and rotate in place with three independent velocities $(v_x, v_y, \omega)$ \cite{siegwart2011,taheri2015}. This freedom makes teleoperation harder, because the operator must command three coupled quantities while also supervising the robot through a graphical interface \cite{fong2001,chen2007}, and human factors remain a central challenge of human--robot interaction \cite{goodrich2007,sheridan2016}.
 
-On the actuation side, a low-cost ESP32 with L298N bipolar H-bridges has a large dead zone and unequal motors. In our robot the static-friction threshold differed between wheels by a factor of $2.7$ ($5.5\,\%$ to $14.8\,\%$ duty), so equal open-loop duty drives the four wheels at different speeds and the robot yaws when commanded straight.
+Vision-based hand gesture recognition offers control without any wearable or handheld device \cite{mitra2007,wachs2011,rautaray2015,oudah2020}, and real-time hand-landmark detectors such as MediaPipe Hands \cite{zhang2020,lugaresi2019} now run on an ordinary laptop CPU. Mobile robots have been driven by arm gestures from a camera \cite{waldherr2000}, by an EMG armband \cite{bisi2018}, by a Leap Motion sensor \cite{chen2024}, by two-hand gestures from a depth camera \cite{luo2019}, and by webcam gestures classified with a CNN \cite{zaman2023} or with MediaPipe \cite{zick2024}. In these systems, however, the gesture channel usually covers only motion. The supervisory functions (switching the control mode, adjusting the speed, pressing the emergency stop) remain on a mouse, a keyboard or a touch screen, so the operator still has to touch a device and the interaction is not contactless end to end.
 
-This paper describes a system that addresses both sides with one camera and one microcontroller. Our contributions are:
+On the actuation side, a low-cost ESP32 with L298N bipolar H-bridges has a large dead zone \cite{tao1996} and unequal motors. In our robot the static-friction threshold differed between wheels by a factor of $2.7$ ($5.5\,\%$ to $14.8\,\%$ duty), so equal open-loop duty drives the four wheels at different speeds and the robot yaws when commanded straight.
+
+\textbf{Novelty.} The novelty of this work lies in the application-driven design of the whole operation loop, not in a new gesture recognizer. First, the loop is fully contactless: every function the operator needs, including driving, mode switching, speed setting and the emergency stop, is reached by hand gestures from one RGB webcam, without a wearable or a pointing device. Second, the two hands are used simultaneously and asymmetrically, following Guiard's kinematic chain model of bimanual action \cite{guiard1987} and early two-handed input studies \cite{buxton1986}: the dominant hand performs the fine supervisory task on the GUI while the non-dominant hand performs the coarse driving task. Among the systems reviewed in Section~\ref{sec:related} (Table~\ref{tab:compare}), none combines a gesture-operated GUI with simultaneous gesture driving of a real robot. Third, the edge controller keeps the motion predictable and safe on low-cost hardware.
+
+Our contributions are:
 \begin{enumerate}
-  \item A dual-hand interface in which the dominant hand controls the whole GUI and the non-dominant hand drives the robot from the same camera stream, including a role assigner that corrects the mirrored handedness label online.
-  \item A host--edge architecture over the robot's own Wi-Fi access point using UDP, with a single-owner lock, two-sided watchdogs and acceleration limiting.
-  \item A per-wheel feed-forward plus PI controller with conditional anti-windup on the ESP32, identified from measured wheel characteristics.
+  \item A contactless, dual-hand operation interface in which the dominant hand controls the whole dashboard and the non-dominant hand drives the robot from the same camera stream, including a role assigner that corrects the mirrored handedness label online.
+  \item An application analysis that maps the requirements of contactless operation to concrete system features and to the measurements that support them (Section~\ref{sec:application}).
+  \item A host--edge architecture over the robot's own Wi-Fi access point using UDP, with a single-owner lock, two-sided watchdogs and acceleration limiting, and a per-wheel feed-forward plus PI controller with conditional anti-windup on the ESP32.
 \end{enumerate}
-We evaluate the link and the controller on logged real runs, and we also report a negative real-hand result for two cursor mechanisms.
+We evaluate the link and the controller on logged real runs, and we also report a negative real-hand result for two cursor mechanisms. Section~\ref{sec:related} reviews related work, Section~\ref{sec:application} describes the application scenario, Sections~\ref{sec:arch} and~\ref{sec:interface} present the system, Section~\ref{sec:experiments} reports the experiments, and Sections~\ref{sec:limits} and~\ref{sec:conclusion} discuss limitations and conclude.
 
 %--------------------------------------------------------------------
-\section{System Architecture and Kinematics}
+\section{Related Work}\label{sec:related}
+\subsection{Touchless interaction in sterile and shared environments}
+Touchless control has been studied most in surgery and interventional radiology, where the surgeon must browse images without breaking asepsis. Gestix let surgeons navigate radiology images with hand gestures seen by a camera \cite{wachs2008}, and later systems used depth sensing to manipulate 3D vascular images during procedures \cite{ohara2014}. A systematic review of 55 such systems found that most controlled image viewers, that only $14.5\,\%$ were tested in a real clinical environment, and that usability and integration into productive systems remained open problems \cite{mewes2017}. The pandemic widened the range of robot tasks in which contact should be avoided, from disinfection to the delivery of medication and food \cite{yang2020}. These works motivate contactless operation but do not address driving a mobile robot.
+
+\subsection{Gesture-based robot teleoperation}
+Surveys of gesture recognition distinguish contact-based devices, such as gloves and armbands, from vision-based methods, and identify detection, tracking and recognition as the main stages \cite{mitra2007,rautaray2015,oudah2020}. Vision-based interfaces were argued early to be a natural way to command machines \cite{wachs2011}, and one of the first gesture interfaces for a mobile service robot recognized arm motions from a camera \cite{waldherr2000}. Wearable sensing remains common: an EMG armband with a k-nearest-neighbour classifier has driven a mobile robot along set paths \cite{bisi2018}, and the Leap Motion controller has been used to teleoperate a robot arm with tremor-adaptive mapping \cite{bassily2014} and a mobile robot with a Gaussian filter against hand shake \cite{chen2024}. For mecanum robots, a depth-camera system assigned navigation to one hand and gripper control to the other \cite{luo2019}, and a webcam system recognized seven gestures with a SqueezeNet CNN and sent velocity commands over Wi-Fi \cite{zaman2023}. Monocular dual-hand pose estimation has been used to teleoperate a bimanual robot, with each hand mirrored by one arm \cite{gao2023}. Closest to our work, a MediaPipe interface let one operator move a cursor and place navigation goals for three simulated robots, halving the execution time against a joystick \cite{zick2024}; the hand there sets goals for an autonomous planner rather than driving directly, and the robots were not real.
+
+\subsection{Two-handed and freehand interaction}
+In skilled bimanual action the non-dominant hand sets the frame in which the dominant hand performs finer work \cite{guiard1987}, and splitting tasks between the hands can make interaction faster than one-handed input \cite{buxton1986}. Freehand pointing at a distance raises two problems that our cursor addresses: the pointer shifts when the hand forms the click gesture \cite{vogel2005}, and holding the arm in mid-air causes fatigue \cite{hincapie2014}. Dwell-based selection, known from gaze interaction, avoids a separate click gesture but must be tuned to prevent accidental activation \cite{jacob1991}. Pointing performance is usually modelled with Fitts' law \cite{mackenzie1992}, and the One-Euro filter is a standard way to smooth noisy pointing input \cite{casiez2012}.
+
+\begin{table*}[!t]
+\caption{Comparison with gesture-based robot and touchless interfaces. "--": no gesture-operated GUI is described.}
+\label{tab:compare}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lllllll}
+\toprule
+System & Input sensor & Wearable & Controlled system & Use of the hands & Gesture-operated GUI & Tested on \\
+\midrule
+Waldherr et al.\ \cite{waldherr2000} & Colour camera & No & Mobile manipulator & Arm gestures & -- & Real robot \\
+Wachs et al.\ \cite{wachs2008} & Camera & No & Image browser (surgery) & One hand & Yes (images) & No robot \\
+Bassily et al.\ \cite{bassily2014} & Leap Motion & No & Robot arm & One hand & -- & Real robot \\
+Bisi et al.\ \cite{bisi2018} & EMG armband & Yes & Mobile robot & One arm & -- & Real robot \\
+Luo et al.\ \cite{luo2019} & Depth camera & No & Mecanum robot + gripper & Drive + gripper, simultaneous & -- & Real robot \\
+Zaman and Wu \cite{zaman2023} & Webcam (CNN) & No & Mecanum robot & One hand, 7 gestures & -- & Real robot \\
+Gao et al.\ \cite{gao2023} & Monocular RGB & No & Bimanual robot arms & Each hand mirrored by one arm & -- & Real platform \\
+Chen et al.\ \cite{chen2024} & Leap Motion & No & Mobile robot & Hand gestures & -- & Real robot \\
+Zick et al.\ \cite{zick2024} & USB camera (MediaPipe) & No & 3 mobile robots & One hand: cursor and goals & Yes (RViz) & Simulation \\
+\midrule
+This work & Laptop webcam (MediaPipe) & No & 4-wheel omni robot & GUI + drive, simultaneous & Yes (whole dashboard) & Real robot \\
+\bottomrule
+\end{tabular}}
+\end{table*}
+
+\subsection{Omnidirectional platforms and low-cost wheel control}
+The kinematics of four-wheel omni and mecanum platforms are well established \cite{siegwart2011,lynch2017,taheri2015}. On low-cost drives, the dead zone of the motor and driver is a classical nonlinearity that is compensated by an inverse, here a feed-forward term \cite{tao1996}, and integrator wind-up during saturation is handled by conditional integration \cite{astrom2006}. For teleoperation over a network, delay degrades control and leads operators to a move-and-wait strategy \cite{ferrell1965,lane2002}, which motivates both a short round trip and a watchdog that stops the robot when commands stop arriving.
+
+%--------------------------------------------------------------------
+\section{Application Scenario and Requirements}\label{sec:application}
+We consider an operator who supervises an omnidirectional robot in a hospital ward, a laboratory or a clean room, for example to move supplies or samples between stations, while wearing gloves or keeping the hands sterile. The operator stands in front of a laptop that shows the robot dashboard and must be able to drive the robot, change its mode and speed, and stop it at any moment without touching the laptop or any other device. From this scenario and the works above we derive six requirements (Table~\ref{tab:req}) and indicate where the paper addresses each. The scenario motivates the design; the experiments in Section~\ref{sec:experiments} were made on a laboratory floor, not in a clinical environment.
+
+\begin{table*}[!t]
+\caption{Requirements of contactless robot operation and how the system addresses them.}
+\label{tab:req}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{>{\raggedright\arraybackslash}p{0.20\textwidth}>{\raggedright\arraybackslash}p{0.26\textwidth}>{\raggedright\arraybackslash}p{0.30\textwidth}>{\raggedright\arraybackslash}p{0.16\textwidth}}
+\toprule
+Requirement & Why it matters & How the system meets it & Evidence \\
+\midrule
+R1 No touch of shared devices & Sterility, gloves, cross-contamination \cite{wachs2008,ohara2014,mewes2017} & Driving and the whole GUI (mode, speed, emergency stop) are operated by hand gestures & Sections~\ref{sec:interface}, \ref{sec:vision} \\
+R2 No wearable or special sensor & Wearables must be cleaned, fitted and charged \cite{bisi2018} & One RGB laptop webcam and MediaPipe on the CPU & Section~\ref{sec:vision} \\
+R3 Supervision without leaving the gesture loop & Mode and speed changes interrupt driving if they need a mouse & Dominant hand: cursor; non-dominant hand: drive, simultaneously \cite{guiard1987} & Section~\ref{sec:interface} \\
+R4 Fail-safe on link or hand loss & Delayed or lost commands degrade teleoperation \cite{ferrell1965,lane2002} & $300\,\mathrm{ms}$ robot watchdog, $0.4\,\mathrm{s}$ host timeout, single-owner lock, release on lost hand & Sections~\ref{sec:arch}, \ref{sec:link} \\
+R5 Predictable holonomic motion & Unequal dead zones make the robot drift and yaw & Direction-preserving inverse kinematics, per-wheel feed-forward + PI & Sections~\ref{sec:wheelctrl}, \ref{sec:wheeltrack} \\
+R6 Low cost and portability & Deployment beyond research labs & ESP32, L298N drivers, laptop webcam & Section~\ref{sec:setup} \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+%--------------------------------------------------------------------
+\section{System Architecture and Kinematics}\label{sec:arch}
 \subsection{Host--Edge Architecture}
-Fig.~\ref{fig:arch} shows the system. The laptop (host) captures MJPG $1280\times720$ video at 30 fps in a separate thread (hand detection runs on a $640$-px-wide copy) that keeps only the newest frame, and runs a two-hand MediaPipe HandLandmarker on the CPU. A role assigner splits the detected hands into a UI hand and a drive hand. The UI hand updates a cursor that is sent over WebSocket to the browser; the drive hand is classified into a motion gesture. A $20\,\mathrm{Hz}$ control loop selects the command from the active mode (manual or gesture), limits its acceleration, and sends it by UDP to the robot.
+Fig.~\ref{fig:arch} shows the system. The laptop (host) captures MJPG $1280\times720$ video at 30 fps in a separate thread (hand detection runs on a $640$-px-wide copy) that keeps only the newest frame, and runs a two-hand MediaPipe HandLandmarker \cite{zhang2020,lugaresi2019} on the CPU. A role assigner splits the detected hands into a UI hand and a drive hand. The UI hand updates a cursor that is sent over WebSocket to the browser; the drive hand is classified into a motion gesture. A $20\,\mathrm{Hz}$ control loop selects the command from the active mode (manual or gesture), limits its acceleration, and sends it by UDP to the robot.
 
 The robot (edge) is an ESP32 that creates a Wi-Fi access point (\texttt{omni-robot}, $192.168.4.1$, UDP port $4210$) with modem sleep disabled. Every $10\,\mathrm{ms}$ it reads the latest command, applies inverse kinematics, runs four wheel controllers, and drives two L298N modules. Each command is acknowledged with a message carrying, for every wheel, the target speed, the measured speed and the duty. The laptop logs these at $20\,\mathrm{Hz}$ to a CSV file.
 
-Two safety mechanisms bound the effect of a lost link. The ESP32 returns a zero command if no packet arrives within $300\,\mathrm{ms}$, and accepts packets from only one owner address until it has been silent for that time. On the laptop, a command older than $0.4\,\mathrm{s}$ is replaced by zero.
+Two safety mechanisms bound the effect of a lost link. The ESP32 returns a zero command if no packet arrives within $300\,\mathrm{ms}$, and accepts packets from only one owner address until it has been silent for that time. On the laptop, a command older than $0.4\,\mathrm{s}$ is replaced by zero. Together they stop the robot instead of letting it continue on a stale command, which is the main hazard of delayed teleoperation \cite{ferrell1965,lane2002}.
 
 \begin{figure*}[!tb]
   \centering
@@ -103,7 +171,7 @@ The robot uses four GM25-370 motors with a $1{:}78$ gearbox and Hall encoders. C
 \end{figure}
 
 %--------------------------------------------------------------------
-\section{Gesture Interface and Wheel Control}
+\section{Gesture Interface and Wheel Control}\label{sec:interface}
 \subsection{Finger State and Pointing Direction}
 For each hand the 21 landmarks $p_k$ are used. A finger $f$ is extended when its fingertip is farther from the wrist than its proximal interphalangeal joint by a ratio that does not depend on the hand's distance to the camera or its in-plane rotation:
 \begin{equation}
@@ -113,12 +181,12 @@ S(f)=\begin{cases}1,&\dfrac{\|p_{\mathrm{tip}(f)}-p_0\|_2}{\|p_{\mathrm{pip}(f)}
 If only the index finger is extended, the pointing angle is measured from the index base $p_5$ to the tip $p_8$ in the image plane and quantized to eight $45^{\circ}$ sectors, giving forward, backward, left, right and four diagonals. Index and middle fingers together pointing left or right command rotation. A fist or an open palm stops the robot. A \texttt{GestureFilter} requires $4$ consecutive frames to start a motion command and $6$ frames to stop.
 
 \subsection{Hand Roles}
-Because the displayed image is mirrored, the handedness label of MediaPipe is inverted from the user's point of view. The role assigner works in three cases. With two hands, roles follow the horizontal order of the wrists, and the disagreement between this order and the (flipped) labels updates a score $c_k=0.95\,c_{k-1}\pm0.05$; when $c_k<-0.6$ the flip convention is toggled. With one hand, the label is voted over the last $10$ frames. If a second hand has just disappeared and the remaining wrist moved by less than $150\,\mathrm{px}$, the previous role is kept. In manual mode the drive branch is disabled and any single hand is the UI hand, so the whole dashboard can be used with one hand.
+The dominant hand is given the fine pointing task and the non-dominant hand the coarse driving task, as suggested by the kinematic chain model of bimanual action \cite{guiard1987}. Because the displayed image is mirrored, the handedness label of MediaPipe is inverted from the user's point of view. The role assigner works in three cases. With two hands, roles follow the horizontal order of the wrists, and the disagreement between this order and the (flipped) labels updates a score $c_k=0.95\,c_{k-1}\pm0.05$; when $c_k<-0.6$ the flip convention is toggled. With one hand, the label is voted over the last $10$ frames. If a second hand has just disappeared and the remaining wrist moved by less than $150\,\mathrm{px}$, the previous role is kept. In manual mode the drive branch is disabled and any single hand is the UI hand, so the whole dashboard can be used with one hand.
 
 \subsection{Cursor, Click Anchor and Slider Grab}
-The index fingertip position is smoothed with a One-Euro filter \cite{casiez2012} with $f_{\min}=1\,\mathrm{Hz}$ and $\beta=8$ in normalized image units: the cut-off $f_c=f_{\min}+\beta|\dot{x}|$ is low when the hand is still and rises with speed. The UI hand has three poses: \emph{point} (index only; the cursor moves and a dwell of $0.8\,\mathrm{s}$ clicks), \emph{click} (index and middle; a click or a drag) and \emph{idle}. A pose must persist for $3$ frames.
+The index fingertip position is smoothed with a One-Euro filter \cite{casiez2012} with $f_{\min}=1\,\mathrm{Hz}$ and $\beta=8$ in normalized image units: the cut-off $f_c=f_{\min}+\beta|\dot{x}|$ is low when the hand is still and rises with speed. The UI hand has three poses: \emph{point} (index only; the cursor moves and a dwell of $0.8\,\mathrm{s}$ clicks, a technique borrowed from gaze interaction \cite{jacob1991}), \emph{click} (index and middle; a click or a drag) and \emph{idle}. A pose must persist for $3$ frames.
 
-Extending the middle finger can pull the index fingertip away from the intended target (Section~\ref{sec:vision} measures how much). When the pose changes from point to click at time $t$, the filtered point history $H$ gives the anchor
+Extending the middle finger can pull the index fingertip away from the intended target, as observed for freehand clicking in general \cite{vogel2005} (Section~\ref{sec:vision} measures how much). When the pose changes from point to click at time $t$, the filtered point history $H$ gives the anchor
 \begin{align}
 (x_a,y_a)&=\bigl(x_j,y_j\bigr)\ \text{with}\ j=\arg\max\{t_j:\ t-t_j\ge 0.2\,\mathrm{s}\},\nonumber\\
 (\Delta x,\Delta y)&=(x_a-x(t),\;y_a-y(t)),\label{eq:anchor}
@@ -130,7 +198,7 @@ and the action point used to hit the DOM element is $(a_x,a_y)=\mathrm{clamp}\bi
 \subsection{Per-Wheel Speed Control}\label{sec:wheelctrl}
 Two limiters guard against slip and supply sag. On the host, the body command ramps with at most $2.0\,\mathrm{s^{-1}}$ acceleration and $4.0\,\mathrm{s^{-1}}$ deceleration, and passes through zero before changing sign. On the ESP32 every wheel target moves toward its goal at most $4.0\,\mathrm{s^{-1}}$.
 
-At every $10\,\mathrm{ms}$ step $k$, wheel $i$ has the filtered measured speed $\omega_i(k)=0.7\,\omega_i(k-1)+0.3\,c_i(k)/4300$, with $c_i$ the counts per second. The control law, a feed-forward term plus a PI term with conditional anti-windup \cite{astrom2006}, is
+At every $10\,\mathrm{ms}$ step $k$, wheel $i$ has the filtered measured speed $\omega_i(k)=0.7\,\omega_i(k-1)+0.3\,c_i(k)/4300$, with $c_i$ the counts per second. The control law, a dead-zone feed-forward term \cite{tao1996} plus a PI term with conditional anti-windup \cite{astrom2006}, is
 \begin{align}
 u^{\mathrm{ff}}_i&=\operatorname{sgn}(r_i)\bigl(a_i+b_i|r_i|\bigr),\quad e_i=r_i-\omega_i,\nonumber\\
 I_i&\leftarrow I_i+K_i e_i\,\Delta t\ \ \text{only if not ramping and not saturated},\nonumber\\
@@ -157,8 +225,8 @@ RR & 0.060 & 0.464 & 1.7 & 2.5 \\
 \end{table}
 
 %--------------------------------------------------------------------
-\section{Experiments}
-\subsection{Setup}
+\section{Experiments}\label{sec:experiments}
+\subsection{Setup}\label{sec:setup}
 The host is a laptop with an Intel Core i5-13420H (12 threads, 15\,GB RAM) running Linux, Python 3.12, MediaPipe 1.2.0 (CPU) and OpenCV 5.0. The robot is an ESP32 DevKit V1 with two L298N modules, four GM25-370 motors and a $12\,\mathrm{V}$ supply. Three runs on a floor were logged at $20\,\mathrm{Hz}$ (Table~\ref{tab:data}); the first two use the single-hand version (v1) and the third the dual-hand version (v2). In the manual run, $389$ of the logged rows belong to gesture mode. Rows recorded while the motor supply was off ($53$ rows in the manual run) are excluded. Only one operator and one robot were used. The dashboard is described in the accompanying technical report.
 
 \begin{table}[!t]
@@ -282,20 +350,53 @@ D & 1280$\times$720 & smooth & 214 & 21.9 & 28.9 & 52.4 & 47.2 \\
 \emph{Cursor near the frame edge.} The mapping of Section~\ref{sec:edge} was introduced after the operator reported that the UI hand was lost whenever the fingertip had to reach the frame border to hit the speed slider in the screen corner, and then that the cursor ran ahead of the fingertip when the stretch started abruptly. The logs give an indirect view only, because they do not store the raw fingertip position: the share of UI-hand frames with the cursor within $2\,\%$ of a screen edge was $2.3$\,\% in A and $1.4$\,\% in B (1:1 mapping), and $8.2$\,\% in C and $4.6$\,\% in D (stretched); the number of UI-hand segments longer than $0.3\,\mathrm{s}$ that ended with the cursor at an edge, a sign of losing the hand there, was $1$ of $6$ in A, $1$ of $3$ in B, $0$ of $15$ in C and $1$ of $9$ in D. The operator also needed the corner more in C and D because the task was to reach it, so these numbers show that the cursor reaches the screen edge with the stretched mapping, not that hand loss was reduced; the counts are small. The lead of the cursor over the fingertip near the edge (up to $6\,\%$ of the frame width by construction) was not measured against the fingertip position and rests on the operator's report.
 
 %--------------------------------------------------------------------
-\section{Limitations}
-The results come from one robot on one floor with one operator. There is no user study, so the claim that the interface is more convenient than a mouse is untested. The real-hand cursor measurements (jitter, click shift) come from one operator and $12$ clicks, and the click hit rate was not measured. The comparison of the controller with a baseline is missing, and the gesture stability criterion does not tell intended from unintended transitions. The end-to-end latency was measured in one session ($15$ events), and the effect of the edge mapping on hand loss was not measured against the true fingertip position. The system has no obstacle sensing: the operator is the only safeguard.
+\section{Limitations}\label{sec:limits}
+The results come from one robot on one floor with one operator. There is no user study, so the claim that the interface is more convenient than a mouse is untested. The real-hand cursor measurements (jitter, click shift) come from one operator and $12$ clicks, and the click hit rate was not measured. The comparison of the controller with a baseline is missing, and the gesture stability criterion does not tell intended from unintended transitions. The end-to-end latency was measured in one session ($15$ events), and the effect of the edge mapping on hand loss was not measured against the true fingertip position. Holding the arms in mid-air for long sessions causes fatigue \cite{hincapie2014}, which we did not measure. Like most touchless systems in the literature \cite{mewes2017}, ours has not been evaluated in a real clinical or clean-room environment. The system has no obstacle sensing: the operator is the only safeguard.
 
-\section{Conclusion}
-A single webcam and a single ESP32 sufficed to operate a four-wheel omnidirectional robot and its dashboard at the same time: one hand for the interface and the other for driving. On the logged runs the link round trip was a few milliseconds at the median, the mean wheel-speed error was $1.5$--$3.2\,\%$ of full scale, and the encoder-derived body motion agreed with the commands within $2.5\,\%$. In later sessions with real hands the vision loop ran at $18.0$--$25.5$ fps and the median delay from the camera frame to half wheel speed was about $427$\,ms, so the interactive latency, not the link, is the limit to improve. The click anchor and the filter parameters need revisiting given the real-hand measurements. Planned work is a user study with real hands, a comparison with baseline controllers, a heading sensor, and obstacle sensing.
+\section{Conclusion}\label{sec:conclusion}
+A single webcam and a single ESP32 sufficed to operate a four-wheel omnidirectional robot and its dashboard at the same time: one hand for the interface and the other for driving. On the logged runs the link round trip was a few milliseconds at the median, the mean wheel-speed error was $1.5$--$3.2\,\%$ of full scale, and the encoder-derived body motion agreed with the commands within $2.5\,\%$. In later sessions with real hands the vision loop ran at $18.0$--$25.5$ fps and the median delay from the camera frame to half wheel speed was about $427$\,ms, so the interactive latency, not the link, is the limit to improve. The click anchor and the filter parameters need revisiting given the real-hand measurements. Planned work is an application task in which operators drive a course and change settings on the dashboard without touching any device, a user study with standard usability and workload questionnaires \cite{brooke1996,hart1988} and pointing measures \cite{mackenzie1992}, a comparison with baseline controllers, a heading sensor, and obstacle sensing.
 
 \FloatBarrier
 \begin{thebibliography}{00}
+\bibitem{yang2020} G.-Z. Yang, B.~J. Nelson, R.~R. Murphy, H.~Choset, H.~Christensen, S.~H. Collins, P.~Dario, K.~Goldberg, K.~Ikuta, N.~Jacobstein, D.~Kragic, R.~H. Taylor, and M.~McNutt, ``Combating COVID-19---The role of robotics in managing public health and infectious diseases,'' \emph{Science Robotics}, vol.~5, no.~40, eabb5589, 2020, doi:10.1126/scirobotics.abb5589.
+\bibitem{wachs2008} J.~P. Wachs, H.~I. Stern, Y.~Edan, M.~Gillam, J.~Handler, C.~Feied, and M.~Smith, ``A gesture-based tool for sterile browsing of radiology images,'' \emph{J. American Medical Informatics Association}, vol.~15, no.~3, pp.~321--323, 2008.
+\bibitem{ohara2014} K.~O'Hara, G.~Gonzalez, A.~Sellen, G.~Penney, A.~Varnavas, H.~Mentis, A.~Criminisi, R.~Corish, M.~Rouncefield, N.~Dastur, and T.~Carrell, ``Touchless interaction in surgery,'' \emph{Communications of the ACM}, vol.~57, no.~1, pp.~70--77, 2014, doi:10.1145/2541883.2541899.
+\bibitem{mewes2017} A.~Mewes, B.~Hensen, F.~Wacker, and C.~Hansen, ``Touchless interaction with software in interventional radiology and surgery: a systematic literature review,'' \emph{Int. J. Computer Assisted Radiology and Surgery}, vol.~12, no.~2, pp.~291--305, 2017, doi:10.1007/s11548-016-1480-6.
 \bibitem{siegwart2011} R.~Siegwart, I.~R. Nourbakhsh, and D.~Scaramuzza, \emph{Introduction to Autonomous Mobile Robots}, 2nd~ed. Cambridge, MA, USA: MIT Press, 2011.
+\bibitem{taheri2015} H.~Taheri, B.~Qiao, and N.~Ghaeminezhad, ``Kinematic model of a four mecanum wheeled mobile robot,'' \emph{Int. J. Computer Applications}, vol.~113, no.~3, pp.~6--9, 2015, doi:10.5120/19804-1586.
+\bibitem{fong2001} T.~Fong and C.~Thorpe, ``Vehicle teleoperation interfaces,'' \emph{Autonomous Robots}, vol.~11, no.~1, pp.~9--18, 2001, doi:10.1023/A:1011295826834.
+\bibitem{chen2007} J.~Y.~C. Chen, E.~C. Haas, and M.~J. Barnes, ``Human performance issues and user interface design for teleoperated robots,'' \emph{IEEE Trans. Systems, Man, and Cybernetics, Part C}, vol.~37, no.~6, pp.~1231--1245, 2007, doi:10.1109/TSMCC.2007.905819.
+\bibitem{goodrich2007} M.~A. Goodrich and A.~C. Schultz, ``Human--robot interaction: a survey,'' \emph{Foundations and Trends in Human--Computer Interaction}, vol.~1, no.~3, pp.~203--275, 2007, doi:10.1561/1100000005.
+\bibitem{sheridan2016} T.~B. Sheridan, ``Human--robot interaction: status and challenges,'' \emph{Human Factors}, vol.~58, no.~4, pp.~525--532, 2016, doi:10.1177/0018720816644364.
+\bibitem{mitra2007} S.~Mitra and T.~Acharya, ``Gesture recognition: a survey,'' \emph{IEEE Trans. Systems, Man, and Cybernetics, Part C}, vol.~37, no.~3, pp.~311--324, 2007, doi:10.1109/TSMCC.2007.893280.
+\bibitem{wachs2011} J.~P. Wachs, M.~K{\"o}lsch, H.~Stern, and Y.~Edan, ``Vision-based hand-gesture applications,'' \emph{Communications of the ACM}, vol.~54, no.~2, pp.~60--71, 2011, doi:10.1145/1897816.1897838.
+\bibitem{rautaray2015} S.~S. Rautaray and A.~Agrawal, ``Vision based hand gesture recognition for human computer interaction: a survey,'' \emph{Artificial Intelligence Review}, vol.~43, no.~1, pp.~1--54, 2015, doi:10.1007/s10462-012-9356-9.
+\bibitem{oudah2020} M.~Oudah, A.~Al-Naji, and J.~Chahl, ``Hand gesture recognition based on computer vision: a review of techniques,'' \emph{J. Imaging}, vol.~6, no.~8, 73, 2020, doi:10.3390/jimaging6080073.
 \bibitem{zhang2020} F.~Zhang \emph{et al.}, ``MediaPipe Hands: On-device real-time hand tracking,'' arXiv:2006.10214, 2020 (CVPR Workshop on Computer Vision for AR/VR).
+\bibitem{lugaresi2019} C.~Lugaresi \emph{et al.}, ``MediaPipe: A framework for building perception pipelines,'' arXiv:1906.08172, 2019.
+\bibitem{waldherr2000} S.~Waldherr, R.~Romero, and S.~Thrun, ``A gesture based interface for human-robot interaction,'' \emph{Autonomous Robots}, vol.~9, no.~2, pp.~151--173, 2000, doi:10.1023/A:1008918401478.
+\bibitem{bisi2018} S.~Bisi, L.~De~Luca, B.~Shrestha, Z.~Yang, and V.~Gandhi, ``Development of an EMG-controlled mobile robot,'' \emph{Robotics}, vol.~7, no.~3, 36, 2018, doi:10.3390/robotics7030036.
+\bibitem{chen2024} L.~Chen, C.~Li, A.~Fahmy, and J.~Sienz, ``GestureMoRo: an algorithm for autonomous mobile robot teleoperation based on gesture recognition,'' \emph{Scientific Reports}, vol.~14, 6199, 2024, doi:10.1038/s41598-024-54488-w.
+\bibitem{luo2019} X.~Luo, A.~Amighetti, and D.~Zhang, ``A human-robot interaction for a mecanum wheeled mobile robot with real-time 3D two-hand gesture recognition,'' \emph{J. Physics: Conference Series}, vol.~1267, 012056, 2019, doi:10.1088/1742-6596/1267/1/012056.
+\bibitem{zaman2023} M.~Q. Zaman and H.-M. Wu, ``Hand gesture-based teleoperation control of a mecanum-wheeled mobile robot,'' \emph{IFAC-PapersOnLine}, vol.~56, no.~2, pp.~1484--1489, 2023, doi:10.1016/j.ifacol.2023.10.1841.
+\bibitem{zick2024} L.~A. Zick, D.~Martinelli, A.~Schneider de~Oliveira, and V.~Cremer~Kalempa, ``Teleoperation system for multiple robots with intuitive hand recognition interface,'' \emph{Scientific Reports}, vol.~14, 30230, 2024, doi:10.1038/s41598-024-80898-x.
+\bibitem{tao1996} G.~Tao and P.~V. Kokotovi{\'c}, \emph{Adaptive Control of Systems with Actuator and Sensor Nonlinearities}. New York, NY, USA: Wiley, 1996.
+\bibitem{guiard1987} Y.~Guiard, ``Asymmetric division of labor in human skilled bimanual action: the kinematic chain as a model,'' \emph{J. Motor Behavior}, vol.~19, no.~4, pp.~486--517, 1987, doi:10.1080/00222895.1987.10735426.
+\bibitem{buxton1986} W.~Buxton and B.~Myers, ``A study in two-handed input,'' in \emph{Proc. ACM CHI}, Boston, MA, USA, 1986, pp.~321--326, doi:10.1145/22627.22390.
+\bibitem{bassily2014} D.~Bassily, C.~Georgoulas, J.~G{\"u}ttler, T.~Linner, and T.~Bock, ``Intuitive and adaptive robotic arm manipulation using the Leap Motion controller,'' in \emph{Proc. 45th Int. Symp. Robotics (ISR) and 8th German Conf. Robotics (ROBOTIK)}, Munich, Germany, 2014, pp.~78--84.
+\bibitem{gao2023} Q.~Gao, Z.~Deng, Z.~Ju, and T.~Zhang, ``Dual-hand motion capture by using biological inspiration for bionic bimanual robot teleoperation,'' \emph{Cyborg and Bionic Systems}, vol.~4, 0052, 2023, doi:10.34133/cbsystems.0052.
+\bibitem{vogel2005} D.~Vogel and R.~Balakrishnan, ``Distant freehand pointing and clicking on very large, high resolution displays,'' in \emph{Proc. ACM UIST}, Seattle, WA, USA, 2005, pp.~33--42, doi:10.1145/1095034.1095041.
+\bibitem{hincapie2014} J.~D. Hincapi{\'e}-Ramos, X.~Guo, P.~Moghadasian, and P.~Irani, ``Consumed endurance: a metric to quantify arm fatigue of mid-air interactions,'' in \emph{Proc. ACM CHI}, Toronto, ON, Canada, 2014, pp.~1063--1072, doi:10.1145/2556288.2557130.
+\bibitem{jacob1991} R.~J.~K. Jacob, ``The use of eye movements in human-computer interaction techniques: what you look at is what you get,'' \emph{ACM Trans. Information Systems}, vol.~9, no.~2, pp.~152--169, 1991.
+\bibitem{mackenzie1992} I.~S. MacKenzie, ``Fitts' law as a research and design tool in human-computer interaction,'' \emph{Human--Computer Interaction}, vol.~7, no.~1, pp.~91--139, 1992, doi:10.1207/s15327051hci0701\_3.
 \bibitem{casiez2012} G.~Casiez, N.~Roussel, and D.~Vogel, ``1\texteuro{} filter: A simple speed-based low-pass filter for noisy input in interactive systems,'' in \emph{Proc. ACM CHI}, Austin, TX, USA, 2012, pp. 2527--2530.
 \bibitem{lynch2017} K.~M. Lynch and F.~C. Park, \emph{Modern Robotics: Mechanics, Planning, and Control}. Cambridge, U.K.: Cambridge Univ. Press, 2017.
 \bibitem{astrom2006} K.~J. {\AA}str{\"o}m and T.~H{\"a}gglund, \emph{Advanced PID Control}. Research Triangle Park, NC, USA: ISA, 2006.
+\bibitem{ferrell1965} W.~R. Ferrell, ``Remote manipulation with transmission delay,'' \emph{IEEE Trans. Human Factors in Electronics}, vol.~HFE-6, no.~1, pp.~24--32, 1965, doi:10.1109/THFE.1965.6591253.
+\bibitem{lane2002} J.~C. Lane, C.~R. Carignan, B.~R. Sullivan, D.~L. Akin, T.~Hunt, and R.~Cohen, ``Effects of time delay on telerobotic control of neutral buoyancy vehicles,'' in \emph{Proc. IEEE Int. Conf. Robotics and Automation (ICRA)}, 2002, pp.~2874--2879.
 \bibitem{esp32trm} Espressif Systems, ``ESP32 Technical Reference Manual,'' (pulse counter and LED PWM controller chapters).
+\bibitem{brooke1996} J.~Brooke, ``SUS: a quick and dirty usability scale,'' in \emph{Usability Evaluation in Industry}, P.~W. Jordan, B.~Thomas, B.~A. Weerdmeester, and I.~L. McClelland, Eds. London, U.K.: Taylor \& Francis, 1996, pp.~189--194.
+\bibitem{hart1988} S.~G. Hart and L.~E. Staveland, ``Development of NASA-TLX (Task Load Index): results of empirical and theoretical research,'' in \emph{Human Mental Workload}, P.~A. Hancock and N.~Meshkati, Eds., Advances in Psychology, vol.~52. Amsterdam, The Netherlands: North-Holland, 1988, pp.~139--183, doi:10.1016/S0166-4115(08)62386-9.
 \end{thebibliography}
 
 \end{document}

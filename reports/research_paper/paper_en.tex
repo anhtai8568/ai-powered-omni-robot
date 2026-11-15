@@ -25,7 +25,9 @@
 
 \title{A Vision-Based Dual-Mode Hand Gesture Interface for Simultaneous GUI Interaction and Teleoperation of a Four-Wheel Omnidirectional Mobile Robot}
 
-\author[a]{Tai Nguyen Anh}
+\author[a]{Tai Nguyen Anh\corref{cor1}}
+\ead{anhtai8568@gmail.com}
+\cortext[cor1]{Corresponding author.}
 \author[b]{Raunak Raj}
 \author[c]{Sharma B. S S P M}
 
@@ -201,7 +203,8 @@ Two limiters guard against slip and supply sag. On the host, the body command ra
 At every $10\,\mathrm{ms}$ step $k$, wheel $i$ has the filtered measured speed $\omega_i(k)=0.7\,\omega_i(k-1)+0.3\,c_i(k)/4300$, with $c_i$ the counts per second. The control law, a dead-zone feed-forward term \cite{tao1996} plus a PI term with conditional anti-windup \cite{astrom2006}, is
 \begin{align}
 u^{\mathrm{ff}}_i&=\operatorname{sgn}(r_i)\bigl(a_i+b_i|r_i|\bigr),\quad e_i=r_i-\omega_i,\nonumber\\
-I_i&\leftarrow I_i+K_i e_i\,\Delta t\ \ \text{only if not ramping and not saturated},\nonumber\\
+I_i&\leftarrow I_i+K_i e_i\,\Delta t\ \ \text{only if not ramping}\nonumber\\
+&\qquad\qquad\text{and not saturated},\nonumber\\
 u_i&=\mathrm{clamp}\bigl(u^{\mathrm{ff}}_i+K_p e_i+I_i,\,-1,\,1\bigr),\label{eq:ctrl}
 \end{align}
 with $K_p=0.8$, $K_i=6.0$. The constants $a_i$ and $b_i$ are least-squares fits of the steady-state duty versus speed measured with the wheels lifted (Table~\ref{tab:ff}). A wheel whose duty is at least $0.95$ while its speed stays below $0.05$ for $0.7\,\mathrm{s}$ is switched off to protect against a jam.
@@ -320,7 +323,7 @@ After the runs above we recorded four more server sessions with the per-run logg
 \label{tab:sess2}
 \centering
 \footnotesize
-\setlength{\tabcolsep}{3pt}
+\setlength{\tabcolsep}{2pt}
 \begin{tabular}{llcrrrrr}
 \toprule
 Sess. & Camera & Cursor & Time (s) & fps & 0 hand & 1 hand & 2 hands \\

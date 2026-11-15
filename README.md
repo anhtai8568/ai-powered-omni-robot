@@ -51,13 +51,13 @@ Quay lại bản này: `git checkout v2.0`.
 
 | Tài liệu | Nguồn LaTeX |
 |---|---|
-| Bài nghiên cứu (bản tiếng Anh: mẫu tạp chí Elsevier `elsarticle`; bản tiếng Việt: mẫu IEEE hội nghị) | `reports/research_paper/paper_en.tex`, `paper_vi.tex` |
+| Bài nghiên cứu (hai bản cùng nội dung, mẫu tạp chí Elsevier `elsarticle`, ba tác giả) | `reports/research_paper/paper_en.tex`, `paper_vi.tex` |
 | Tài liệu kỹ thuật và thiết kế hệ thống | `reports/technical_document/report_en.tex`, `report_vi.tex` |
 
 Mọi hình và con số lấy từ dữ liệu trong `docs/data/` bằng `python reports/make_figures.py`
 (hình trong `reports/figures/`, số trong `reports/figures/stats.json`).
 Phiên chạy thứ hai (bốn phiên server có tay thật, log trong `docs/data/v2/session2/`) do `python reports/session2.py` xử lý, ra `reports/figures/stats_session2.json` và hình `fig_sess2_*`; từng phiên đọc bằng `python tests/analyze_run.py logs/ai_<giờ>.csv logs/drive_<giờ>.csv`. Dựng lại PDF cần TeX Live
-(`latexmk -pdf paper_en.tex`) hoặc Tectonic; bản tiếng Việt nên dùng `xelatex`. Tác giả bài nghiên cứu bản tiếng Anh: Tai Nguyen Anh (Information Systems, Phenikaa University, Hà Nội), Raunak Raj và Sharma B. S S P M (Parul University, Vadodara, Ấn Độ); email và tác giả liên hệ (corresponding author) chưa điền. Bản tiếng Việt vẫn còn để trống cơ quan.
+(`latexmk -pdf paper_en.tex`) hoặc Tectonic (`tectonic paper_vi.tex`); bản tiếng Việt cần XeTeX (`xelatex` hoặc Tectonic). Tác giả bài nghiên cứu: Tai Nguyen Anh (Information Systems, Phenikaa University, Hà Nội), Raunak Raj và Sharma B. S S P M (Parul University, Vadodara, Ấn Độ); tác giả liên hệ (corresponding author) là Tai Nguyen Anh.
 
 `explain/` có hai file Word giải thích bài nghiên cứu và cách đọc từng biểu đồ: `Giai_thich_paper_VI.docx` (tiếng Việt) và `Paper_Explained_EN.docx` (tiếng Anh đơn giản). Tạo lại bằng `python explain/build_guides.py` (cần `python-docx`) sau khi chạy lại `reports/make_figures.py`.
 
@@ -149,6 +149,7 @@ Kê robot lên (bánh không chạm đất) trước khi chạy motor.
 | `python tests/test_hands_logic.py` | Kiểm tra logic tay bằng bàn tay giả, không cần camera |
 | `python tests/app_task_marker.py` + `python tests/app_task_analyze.py` | Thí nghiệm ứng dụng vận hành không chạm: đánh dấu mốc khi lái qua đường đi, rồi tính thời gian, lỗi, thao tác dashboard (kịch bản: `docs/app_task_protocol.md`) |
 | `python tests/real_hand_eval.py` | Đo rung và độ lệch khi click trên bàn tay thật (tắt server trước; giữ yên ngón tay theo hướng dẫn) |
+| `python tests/camera_fps_test.py` | Đo FPS camera, tách từng khâu (tắt server trước) |
 | `tests/handcursor_test.html` | 49 kiểm tra con trỏ trong trình duyệt: phục vụ thư mục gốc bằng `python -m http.server`, mở trang này (cửa sổ cao trên 500 px) |
 | `python communication/robot_link.py` | Gửi lệnh thử tới ESP32 (khi không chạy server) |
 

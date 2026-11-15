@@ -147,6 +147,7 @@ Kê robot lên (bánh không chạm đất) trước khi chạy motor.
 | `pio device monitor` | Chỉ xem Serial, không nạp lại |
 | `python ai/demo.py` | Xem AI nhận hai tay, vai trò và con trỏ (`left` nếu thuận tay trái) |
 | `python tests/test_hands_logic.py` | Kiểm tra logic tay bằng bàn tay giả, không cần camera |
+| `python tests/app_task_marker.py` + `python tests/app_task_analyze.py` | Thí nghiệm ứng dụng vận hành không chạm: đánh dấu mốc khi lái qua đường đi, rồi tính thời gian, lỗi, thao tác dashboard (kịch bản: `docs/app_task_protocol.md`) |
 | `python tests/real_hand_eval.py` | Đo rung và độ lệch khi click trên bàn tay thật (tắt server trước; giữ yên ngón tay theo hướng dẫn) |
 | `tests/handcursor_test.html` | 49 kiểm tra con trỏ trong trình duyệt: phục vụ thư mục gốc bằng `python -m http.server`, mở trang này (cửa sổ cao trên 500 px) |
 | `python communication/robot_link.py` | Gửi lệnh thử tới ESP32 (khi không chạy server) |

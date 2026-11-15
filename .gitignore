@@ -48,3 +48,6 @@ reports/**/*.fdb_latexmk
 reports/**/*.synctex.gz
 reports/**/*.bbl
 reports/**/*.blg
+
+# LibreOffice lock files
+.~lock.*#

@@ -11,25 +11,26 @@
 </head>
 <body data-mode="manual">
   <!-- Hình camera phủ cả cửa sổ, nằm ngoài .screen để không bị lớp xếp chồng của .screen che mặt nạ -->
-  <canvas id="view" width="640" height="480" aria-label="Hình từ camera laptop"></canvas>
+  <canvas id="view" width="640" height="480" aria-label="Hình từ camera laptop" data-i18n-aria="view.aria"></canvas>
 
   <header class="top">
-    <h1>Robot omni</h1>
-    <ul class="status" aria-label="Trạng thái kết nối">
-      <li id="st-link" data-hand="info" data-ok="false">Máy chủ</li>
-      <li id="st-camera" data-hand="info" data-ok="false">Camera</li>
-      <li id="st-robot" data-hand="info" data-ok="false">Robot</li>
+    <h1 data-i18n="title">Robot omni</h1>
+    <ul class="status" aria-label="Trạng thái kết nối" data-i18n-aria="status.aria">
+      <li id="st-link" data-hand="info" data-ok="false" data-i18n="st.link">Máy chủ</li>
+      <li id="st-camera" data-hand="info" data-ok="false" data-i18n="st.camera">Camera</li>
+      <li id="st-robot" data-hand="info" data-ok="false" data-i18n="st.robot">Robot</li>
       <li id="st-fps" data-hand="info" data-ok="false">0 khung/giây</li>
       <li id="st-hand-ui" data-hand="info" data-ok="false">Tay giao diện</li>
       <li id="st-hand-drive" data-hand="info" data-ok="false">Tay lái</li>
     </ul>
-    <div class="mode" role="group" aria-label="Chế độ điều khiển">
-      <button id="mode-manual" data-hand="button" aria-pressed="true">Thủ công</button>
-      <button id="mode-gesture" data-hand="button" aria-pressed="false">Cử chỉ tay</button>
+    <div class="mode" role="group" aria-label="Chế độ điều khiển" data-i18n-aria="mode.aria">
+      <button id="mode-manual" data-hand="button" aria-pressed="true" data-i18n="mode.manual">Thủ công</button>
+      <button id="mode-gesture" data-hand="button" aria-pressed="false" data-i18n="mode.gesture">Cử chỉ tay</button>
     </div>
-    <div class="tools" role="group" aria-label="Công cụ">
+    <div class="tools" role="group" aria-label="Công cụ" data-i18n-aria="tools.aria">
       <button id="toggle-video" data-hand="button" aria-pressed="false">Ẩn hình</button>
-      <button id="open-settings" data-hand="button" aria-pressed="false">Cài đặt</button>
+      <button id="open-settings" data-hand="button" aria-pressed="false" data-i18n="settings">Cài đặt</button>
+      <button id="lang" data-hand="button" data-i18n="lang.button">EN</button>
     </div>
   </header>
 
@@ -39,7 +40,7 @@
     </section>
 
     <aside class="panel">
-      <figure class="motion" aria-label="Hướng di chuyển robot đang nhận">
+      <figure class="motion" aria-label="Hướng di chuyển robot đang nhận" data-i18n-aria="motion.aria">
         <svg viewBox="-100 -100 200 200" aria-hidden="true">
           <defs>
             <marker id="head" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto">
@@ -58,82 +59,83 @@
           <path id="arc" class="arc" marker-end="url(#head)"/>
           <line id="vec" x1="0" y1="0" x2="0" y2="0" class="vec" marker-end="url(#head)"/>
         </svg>
-        <figcaption id="gesture-now">Không thấy tay</figcaption>
+        <figcaption id="gesture-now" data-i18n="nohand">Không thấy tay</figcaption>
       </figure>
 
-      <dl class="readout" aria-label="Lệnh robot đang nhận">
-        <div><dt>Tiến <span>vx</span></dt><dd id="r-vx">0.00</dd></div>
-        <div><dt>Ngang <span>vy</span></dt><dd id="r-vy">0.00</dd></div>
-        <div><dt>Xoay <span>w</span></dt><dd id="r-w">0.00</dd></div>
+      <dl class="readout" aria-label="Lệnh robot đang nhận" data-i18n-aria="readout.aria">
+        <div><dt data-i18n-html="r.vx">Tiến <span>vx</span></dt><dd id="r-vx">0.00</dd></div>
+        <div><dt data-i18n-html="r.vy">Ngang <span>vy</span></dt><dd id="r-vy">0.00</dd></div>
+        <div><dt data-i18n-html="r.w">Xoay <span>w</span></dt><dd id="r-w">0.00</dd></div>
       </dl>
 
       <div class="input">
         <div class="drive manual-only">
-          <div id="pad" class="pad" data-hand="pad" aria-label="Cần điều khiển: kéo lên để tiến, sang ngang để đi ngang">
+          <div id="pad" class="pad" data-hand="pad" aria-label="Cần điều khiển: kéo lên để tiến, sang ngang để đi ngang" data-i18n-aria="pad.aria">
             <div id="knob" class="knob"></div>
           </div>
           <div class="rot">
-            <button id="rot-l" data-hand="hold">Xoay trái</button>
-            <button id="rot-r" data-hand="hold">Xoay phải</button>
+            <button id="rot-l" data-hand="hold" data-i18n="rot.l">Xoay trái</button>
+            <button id="rot-r" data-hand="hold" data-i18n="rot.r">Xoay phải</button>
           </div>
         </div>
 
-        <ul class="gestures gesture-only" aria-label="Bảng cử chỉ">
-          <li data-g="fist palm">Nắm tay hoặc xòe tay <b>Dừng</b></li>
-          <li data-g="point_up">Ngón trỏ chỉ lên <b>Tiến</b></li>
-          <li data-g="point_down">Ngón trỏ chỉ xuống <b>Lùi</b></li>
-          <li data-g="point_left">Ngón trỏ chỉ trái <b>Sang trái</b></li>
-          <li data-g="point_right">Ngón trỏ chỉ phải <b>Sang phải</b></li>
-          <li data-g="point_up_left point_up_right point_down_left point_down_right">Ngón trỏ chỉ chéo <b>Đi chéo</b></li>
-          <li data-g="v_left">Chữ V chỉ trái <b>Xoay trái</b></li>
-          <li data-g="v_right">Chữ V chỉ phải <b>Xoay phải</b></li>
+        <ul class="gestures gesture-only" aria-label="Bảng cử chỉ" data-i18n-aria="gestures.aria">
+          <li data-g="fist palm" data-i18n-html="g.stop">Nắm tay hoặc xòe tay <b>Dừng</b></li>
+          <li data-g="point_up" data-i18n-html="g.up">Ngón trỏ chỉ lên <b>Tiến</b></li>
+          <li data-g="point_down" data-i18n-html="g.down">Ngón trỏ chỉ xuống <b>Lùi</b></li>
+          <li data-g="point_left" data-i18n-html="g.left">Ngón trỏ chỉ trái <b>Sang trái</b></li>
+          <li data-g="point_right" data-i18n-html="g.right">Ngón trỏ chỉ phải <b>Sang phải</b></li>
+          <li data-g="point_up_left point_up_right point_down_left point_down_right" data-i18n-html="g.diag">Ngón trỏ chỉ chéo <b>Đi chéo</b></li>
+          <li data-g="v_left" data-i18n-html="g.vleft">Chữ V chỉ trái <b>Xoay trái</b></li>
+          <li data-g="v_right" data-i18n-html="g.vright">Chữ V chỉ phải <b>Xoay phải</b></li>
         </ul>
 
         <label class="speed">
-          <span>Tốc độ</span>
+          <span data-i18n="speed">Tốc độ</span>
           <input id="speed" data-hand="slider" type="range" min="10" max="100" value="50">
           <output id="speed-out">50%</output>
         </label>
       </div>
 
       <button id="estop" class="estop" data-hand="button" aria-pressed="false">Dừng khẩn cấp</button>
-      <p class="keys manual-only">Mũi tên hoặc W A S D để đi, Q E xoay, Space dừng</p>
+      <p class="keys manual-only" data-i18n="keys">Mũi tên hoặc W A S D để đi, Q E xoay, Space dừng</p>
     </aside>
   </main>
 
   <div id="settings" class="overlay" hidden>
-    <section class="dialog" role="dialog" aria-label="Cài đặt">
-      <h2>Cài đặt</h2>
+    <section class="dialog" role="dialog" aria-label="Cài đặt" data-i18n-aria="set.title">
+      <h2 data-i18n="set.title">Cài đặt</h2>
       <div class="row">
-        <span>Tay thuận (điều khiển giao diện)</span>
+        <span data-i18n="set.dominant">Tay thuận (điều khiển giao diện)</span>
         <div class="pair">
-          <button id="dom-right" data-hand="button" aria-pressed="true">Phải</button>
-          <button id="dom-left" data-hand="button" aria-pressed="false">Trái</button>
+          <button id="dom-right" data-hand="button" aria-pressed="true" data-i18n="set.right">Phải</button>
+          <button id="dom-left" data-hand="button" aria-pressed="false" data-i18n="set.left">Trái</button>
         </div>
       </div>
       <div class="row">
-        <span>Click bằng giữ yên con trỏ</span>
+        <span data-i18n="set.dwell">Click bằng giữ yên con trỏ</span>
         <button id="opt-dwell" class="toggle" data-hand="button" aria-pressed="true">Bật</button>
       </div>
       <label class="row">
-        <span>Thời gian giữ yên</span>
+        <span data-i18n="set.dwellms">Thời gian giữ yên</span>
         <input id="dwell-ms" data-hand="slider" type="range" min="400" max="1500" step="100" value="800">
         <output id="dwell-out">0.8 s</output>
       </label>
       <div class="row">
-        <span>Click bằng ngón giữa</span>
+        <span data-i18n="set.two">Click bằng ngón giữa</span>
         <button id="opt-two" class="toggle" data-hand="button" aria-pressed="true">Bật</button>
       </div>
       <label class="row">
-        <span>Vùng tay hoạt động</span>
+        <span data-i18n="set.region">Vùng tay hoạt động</span>
         <input id="region" data-hand="slider" type="range" min="40" max="100" step="5" value="100">
         <output id="region-out">100%</output>
       </label>
-      <p class="note">100%: con trỏ nằm đúng đầu ngón tay trên hình, riêng sát mép khung camera con trỏ chạy nhanh hơn tay để chạm tới góc màn hình mà tay không phải ra ngoài khung. Nhỏ hơn thì tay đi ít hơn, nhưng con trỏ không còn trùng đầu ngón tay.</p>
-      <button id="settings-close" class="close" data-hand="button">Đóng</button>
+      <p class="note" data-i18n="set.note">100%: con trỏ nằm đúng đầu ngón tay trên hình, riêng sát mép khung camera con trỏ chạy nhanh hơn tay để chạm tới góc màn hình mà tay không phải ra ngoài khung. Nhỏ hơn thì tay đi ít hơn, nhưng con trỏ không còn trùng đầu ngón tay.</p>
+      <button id="settings-close" class="close" data-hand="button" data-i18n="set.close">Đóng</button>
     </section>
   </div>
 
+  <script src="/static/i18n.js"></script>
   <script src="/static/handcursor.js"></script>
   <script src="/static/dashboard.js"></script>
 </body>
